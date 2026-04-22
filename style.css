@@ -240,6 +240,20 @@ body {
     image-rendering: pixelated;
 }
 
+/* 스테이지 클리어 직후 "이번에 드러난 요소"에 재생되는 등장 애니메이션 */
+@keyframes reveal-pop {
+      0% { opacity: 0; transform: translateY(-4px) scale(0.6); filter: drop-shadow(0 0 0 rgba(255, 232, 150, 0)); }
+     40% { opacity: 1; transform: translateY(0)    scale(1.15); filter: drop-shadow(0 0 6px rgba(255, 232, 150, 0.9)); }
+     70% { opacity: 1; transform: translateY(0)    scale(0.96); filter: drop-shadow(0 0 4px rgba(255, 232, 150, 0.5)); }
+    100% { opacity: 1; transform: translateY(0)    scale(1);    filter: drop-shadow(0 0 0 rgba(255, 232, 150, 0)); }
+}
+
+.lobby-scene svg .just-revealed {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: reveal-pop 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 .lobby-scene-nav {
     display: flex;
     align-items: center;

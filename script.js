@@ -121,6 +121,11 @@ const lobbyNextBtn = document.getElementById('lobby-next-btn');
 
 // 로비에서 현재 보고 있는 공간의 인덱스 (1..10). 기본값은 진행 중인 공간.
 let viewedWorldIndex = 1;
+
+// 스테이지 클리어 직후 로비에서 "이번에 새로 채워진 요소"에 애니메이션을 재생하기 위한 상태.
+// 애니메이션이 한 번 재생된 뒤에는 null 로 리셋된다.
+let pendingRevealWorld = null;
+let pendingRevealStage = null;
 const stageBtn = document.getElementById('stage-btn');
 const gameContainer = document.getElementById('game-container');
 const userNameEl = document.getElementById('user-name');
@@ -257,6 +262,23 @@ function renderLobbyScene(worldIndex, revealLevel) {
         }
     });
     lobbyScene.appendChild(svg);
+
+    // 방금 클리어한 스테이지로 새로 드러난 요소가 있다면 한 번만 애니메이션 재생
+    if (
+        pendingRevealWorld === worldIndex &&
+        pendingRevealStage != null &&
+        pendingRevealStage <= revealLevel
+    ) {
+        const targets = svg.querySelectorAll(
+            `[data-min-stage="${pendingRevealStage}"]`
+        );
+        targets.forEach(el => {
+            // 다음 프레임에 클래스를 붙여야 애니메이션이 처음부터 재생됨
+            requestAnimationFrame(() => el.classList.add('just-revealed'));
+        });
+        pendingRevealWorld = null;
+        pendingRevealStage = null;
+    }
 }
 
 function updateLobbyWorldView() {
@@ -566,6 +588,19 @@ function checkWin() {
         // 다음 스테이지 진행도 저장 (최대 100 = 모든 스테이지 완료 상태)
         const nextIndex = Math.min(currentStageIndex + 1, 100);
         saveProgress(nextIndex);
+
+        // [예시 적용] 스테이지 2 (currentStageIndex === 1) 를 클리어한 경우:
+        //   팝업 대신 로비로 돌아가 "새로 채워진 가구"가 나타나는 애니메이션을 재생한다.
+        //   nextIndex=2 → computeWorldInfo: worldIndex=1, revealLevel=3
+        //   즉, world 1 의 data-min-stage="3" 요소가 이번에 새로 드러난다.
+        if (currentStageIndex === 1) {
+            pendingRevealWorld = 1;
+            pendingRevealStage = 3;
+            setTimeout(() => {
+                showLobby();
+            }, 500);
+            return;
+        }
 
         setTimeout(() => {
             if (currentStageIndex + 1 >= 100) {
