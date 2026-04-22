@@ -75,6 +75,10 @@ let firstClick = true;
 
 // ==================== DOM 참조 ====================
 const authScreen = document.getElementById('auth-screen');
+const lobbyScreen = document.getElementById('lobby-screen');
+const lobbyUserNameEl = document.getElementById('lobby-user-name');
+const lobbyLogoutBtn = document.getElementById('lobby-logout-btn');
+const stage1Btn = document.getElementById('stage-1-btn');
 const gameContainer = document.getElementById('game-container');
 const userNameEl = document.getElementById('user-name');
 const logoutBtn = document.getElementById('logout-btn');
@@ -164,7 +168,7 @@ authForm.addEventListener('submit', async (e) => {
             }, 700);
         } else {
             await loginUser(username, password);
-            enterGame();
+            showLobby();
         }
     } catch (err) {
         showAuthError(err.message);
@@ -178,16 +182,40 @@ logoutBtn.addEventListener('click', () => {
     exitToAuth();
 });
 
-function enterGame() {
+lobbyLogoutBtn.addEventListener('click', () => {
+    logoutUser();
+    exitToAuth();
+});
+
+stage1Btn.addEventListener('click', () => startStage(0));
+
+function showLobby() {
     authScreen.classList.add('hidden');
+    gameContainer.classList.add('hidden');
+    modal.classList.add('hidden');
+    clearModal.classList.add('hidden');
+    endingModal.classList.add('hidden');
+    lobbyScreen.classList.remove('hidden');
+
+    lobbyUserNameEl.innerText = getCurrentUser() || '';
+
+    // 게임 상태 정리
+    boardElement.innerHTML = '';
+    board = [];
+}
+
+function startStage(stageIndex) {
+    authScreen.classList.add('hidden');
+    lobbyScreen.classList.add('hidden');
     gameContainer.classList.remove('hidden');
-    userNameEl.innerText = getCurrentUser();
-    currentStageIndex = loadProgress();
+    userNameEl.innerText = getCurrentUser() || '';
+    currentStageIndex = stageIndex;
     initGame();
 }
 
 function exitToAuth() {
     gameContainer.classList.add('hidden');
+    lobbyScreen.classList.add('hidden');
     modal.classList.add('hidden');
     clearModal.classList.add('hidden');
     endingModal.classList.add('hidden');
@@ -423,8 +451,7 @@ retryBtn.addEventListener('click', () => {
 
 exitBtn.addEventListener('click', () => {
     modal.classList.add('hidden');
-    logoutUser();
-    exitToAuth();
+    showLobby();
 });
 
 nextStageBtn.addEventListener('click', () => {
@@ -435,17 +462,15 @@ nextStageBtn.addEventListener('click', () => {
 
 clearExitBtn.addEventListener('click', () => {
     clearModal.classList.add('hidden');
-    logoutUser();
-    exitToAuth();
+    showLobby();
 });
 
 endingExitBtn.addEventListener('click', () => {
     endingModal.classList.add('hidden');
-    logoutUser();
-    exitToAuth();
+    showLobby();
 });
 
 // ==================== 부트스트랩 ====================
 if (getCurrentUser()) {
-    enterGame();
+    showLobby();
 }
