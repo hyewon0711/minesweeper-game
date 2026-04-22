@@ -396,7 +396,7 @@ function initGame() {
     if (stageNum <= 3) {
         ROWS = 3;
         COLS = 3;
-        MINES = 1;
+        MINES = 2;
     } else if (stageNum === 4) {
         ROWS = 4;
         COLS = 4;
