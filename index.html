@@ -32,6 +32,11 @@
             <span class="user-info">👤 <span id="lobby-user-name"></span></span>
             <button id="lobby-logout-btn" class="logout-btn" type="button">로그아웃</button>
         </div>
+        <div class="volume-bar">
+            <button id="lobby-volume-icon" class="volume-icon" type="button" aria-label="음소거 토글">🔊</button>
+            <input id="lobby-volume-slider" class="volume-slider" type="range" min="0" max="100" step="1" value="20" aria-label="볼륨">
+            <span id="lobby-volume-value" class="volume-value">20</span>
+        </div>
         <h1 class="lobby-title">지뢰찾기</h1>
         <div class="lobby-body">
             <div class="lobby-scene-nav">
@@ -52,7 +57,15 @@
     <div id="game-container" class="game-container hidden">
         <div class="user-bar">
             <span class="user-info">👤 <span id="user-name"></span></span>
-            <button id="logout-btn" class="logout-btn" type="button">로그아웃</button>
+            <div class="user-bar-actions">
+                <button id="game-quit-btn" class="logout-btn" type="button">나가기</button>
+                <button id="logout-btn" class="logout-btn" type="button">로그아웃</button>
+            </div>
+        </div>
+        <div class="volume-bar">
+            <button id="game-volume-icon" class="volume-icon" type="button" aria-label="음소거 토글">🔊</button>
+            <input id="game-volume-slider" class="volume-slider" type="range" min="0" max="100" step="1" value="20" aria-label="볼륨">
+            <span id="game-volume-value" class="volume-value">20</span>
         </div>
         <h1 id="game-title">지뢰찾기 - 스테이지 1</h1>
         <div class="header">
@@ -83,6 +96,18 @@
             <div class="modal-buttons">
                 <button id="retry-btn">재시도</button>
                 <button id="exit-btn">나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 나가기 확인 팝업창 -->
+    <div id="quit-confirm-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="quit-title">정말 나가시겠어요?</h2>
+            <p>지금까지 진행한 판이 사라집니다.</p>
+            <div class="modal-buttons">
+                <button id="quit-yes-btn">예</button>
+                <button id="quit-no-btn">아니오</button>
             </div>
         </div>
     </div>

@@ -188,6 +188,97 @@ body {
 
 .logout-btn:hover { background-color: var(--primary-hover); }
 
+/* 게임 화면 우상단: 나가기 + 로그아웃 두 버튼을 나란히 배치 */
+.user-bar-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+/* ==================== 볼륨 바 (로비 / 게임 공통) ==================== */
+/* 유저 바 바로 아래에 배치, 스피커 아이콘 + 슬라이더 + 현재 값 */
+.volume-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.7rem;
+    margin: 0 0 0.8rem;
+    background-color: var(--cell-empty);
+    border-radius: 10px;
+}
+
+.volume-icon {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--text-color);
+    transition: transform 0.12s ease;
+}
+.volume-icon:hover { transform: scale(1.1); }
+.volume-icon.muted { opacity: 0.55; }
+
+.volume-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #BFD3DA;
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+}
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-sage);
+    border: 2px solid var(--container-bg);
+    box-shadow: 0 1px 3px rgba(26,45,62,0.25);
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+.volume-slider::-webkit-slider-thumb:hover { background: var(--accent-sage-hover); }
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-sage);
+    border: 2px solid var(--container-bg);
+    box-shadow: 0 1px 3px rgba(26,45,62,0.25);
+    cursor: pointer;
+}
+
+.volume-value {
+    min-width: 2.2em;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--muted-text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 나가기 확인 모달 — 기본 modal 스타일 재사용, 제목은 슬레이트 컬러로
+   (.modal-content h2 의 빨간색 룰을 이기기 위해 h2.xxx 로 특이도 맞춤) */
+.modal-content h2.quit-title {
+    color: var(--text-color);
+    font-size: 1.6rem;
+}
+
+#quit-yes-btn {
+    background-color: var(--cell-bg);
+    color: white;
+}
+#quit-yes-btn:hover { background-color: var(--primary-hover); }
+
+#quit-no-btn {
+    background-color: var(--cell-empty);
+    color: var(--text-color);
+}
+#quit-no-btn:hover { background-color: #BFD3DA; }
+
 /* ==================== 로비 (스테이지 선택) ==================== */
 .lobby-screen {
     display: flex;

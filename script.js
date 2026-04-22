@@ -108,6 +108,167 @@ let gameOver = false;
 let minesLeft = MINES;
 let firstClick = true;
 
+// ==================== 오디오 매니저 ====================
+// - BGM: 게임 전체에서 한 곡(lofi-study)만 계속 반복 재생한다.
+//        playBgmForWorld(worldIndex) 호출부는 그대로 두되, worldIndex 값과 무관하게
+//        같은 파일을 로드해 공간 전환 / 스테이지 진입 / 로비 복귀 시에도 음원이 끊기지 않는다.
+// - SFX: 버튼/안전칸/지뢰/클리어 4종. 연타 대비해 재생 시마다 currentTime=0.
+// - 볼륨: 0~100 정수. 슬라이더는 로비/게임 두 곳에 있지만 값은 localStorage 한 곳에
+//         저장되어 항상 동기화된다. 시작값 30%.
+// - 음소거: 슬라이더를 0으로 내리는 것과 별개로 스피커 아이콘 클릭으로도 토글 가능.
+//           음소거 해제 시에는 직전 볼륨으로 복원한다.
+// NOTE: 브라우저 autoplay 정책 때문에 페이지 로드 직후에는 BGM이 재생되지 않을 수 있다.
+//       첫 사용자 상호작용(클릭/키 입력) 시점에 재생을 시도한다.
+const VOLUME_KEY = 'minesweeper_volume';
+const MUTED_KEY = 'minesweeper_muted';
+const DEFAULT_VOLUME = 20;
+// 전체 공통 BGM (lofi-study 루프)
+const BGM_SRC = 'assets/bgm/bgm-world-1.mp3';
+
+const sfxSources = {
+    button: 'assets/sfx/sfx-button.mp3',
+    safe:   'assets/sfx/sfx-safe.mp3',
+    mine:   'assets/sfx/sfx-mine.mp3',
+    clear:  'assets/sfx/sfx-clear.mp3'
+};
+const sfxAudio = {};
+for (const key in sfxSources) {
+    const a = new Audio(sfxSources[key]);
+    a.preload = 'auto';
+    sfxAudio[key] = a;
+}
+
+let bgmAudio = new Audio();
+bgmAudio.loop = true;
+bgmAudio.preload = 'auto';
+let bgmLoaded = false;        // BGM src 를 한 번이라도 붙였는지
+let bgmWantsToPlay = false;   // 사용자가 음소거하지 않았고 재생 의도가 있는 상태
+let audioUnlocked = false;    // 첫 사용자 상호작용 이후 true
+
+function getSavedVolume() {
+    const v = parseInt(localStorage.getItem(VOLUME_KEY), 10);
+    if (Number.isFinite(v) && v >= 0 && v <= 100) return v;
+    return DEFAULT_VOLUME;
+}
+function getSavedMuted() {
+    return localStorage.getItem(MUTED_KEY) === '1';
+}
+function saveVolume(v) { localStorage.setItem(VOLUME_KEY, String(v)); }
+function saveMuted(m) { localStorage.setItem(MUTED_KEY, m ? '1' : '0'); }
+
+// 현재 유효 볼륨(0~1). 음소거 상태면 0.
+function effectiveVolume() {
+    if (getSavedMuted()) return 0;
+    return getSavedVolume() / 100;
+}
+
+function applyVolumeToAllAudio() {
+    const v = effectiveVolume();
+    bgmAudio.volume = v;
+    for (const key in sfxAudio) sfxAudio[key].volume = v;
+}
+
+// 슬라이더/아이콘 UI를 현재 저장된 값으로 동기화
+function syncVolumeUI() {
+    const vol = getSavedVolume();
+    const muted = getSavedMuted();
+    const sliders = [
+        document.getElementById('lobby-volume-slider'),
+        document.getElementById('game-volume-slider')
+    ];
+    const values = [
+        document.getElementById('lobby-volume-value'),
+        document.getElementById('game-volume-value')
+    ];
+    const icons = [
+        document.getElementById('lobby-volume-icon'),
+        document.getElementById('game-volume-icon')
+    ];
+    sliders.forEach(s => { if (s) s.value = String(vol); });
+    values.forEach(el => { if (el) el.innerText = String(vol); });
+    icons.forEach(ic => {
+        if (!ic) return;
+        // 음소거이거나 볼륨 0 이면 🔇 로 표시
+        if (muted || vol === 0) {
+            ic.innerText = '🔇';
+            ic.classList.add('muted');
+        } else if (vol < 40) {
+            ic.innerText = '🔉';
+            ic.classList.remove('muted');
+        } else {
+            ic.innerText = '🔊';
+            ic.classList.remove('muted');
+        }
+    });
+}
+
+function setVolume(v, { save = true } = {}) {
+    v = Math.max(0, Math.min(100, Math.round(v)));
+    if (save) saveVolume(v);
+    // 슬라이더를 0 이상으로 움직이면 음소거 상태는 자동 해제
+    if (v > 0 && getSavedMuted()) saveMuted(false);
+    applyVolumeToAllAudio();
+    syncVolumeUI();
+}
+
+function toggleMute() {
+    const nowMuted = !getSavedMuted();
+    saveMuted(nowMuted);
+    // 음소거를 끌 때 현재 슬라이더가 0 이면 디폴트 볼륨으로 복원
+    if (!nowMuted && getSavedVolume() === 0) saveVolume(DEFAULT_VOLUME);
+    applyVolumeToAllAudio();
+    syncVolumeUI();
+    // 재생 의도가 있었으면 다시 시도
+    if (!nowMuted && bgmWantsToPlay) tryPlayBgm();
+}
+
+function tryPlayBgm() {
+    if (!audioUnlocked) return;     // 아직 사용자 상호작용 전
+    if (!bgmAudio.src) return;      // 아직 어떤 BGM 도 로드되지 않음
+    if (getSavedMuted()) return;
+    const p = bgmAudio.play();
+    if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay block */ });
+}
+
+// 모든 공간/스테이지에서 동일한 BGM 한 곡(lofi-study)을 이어서 재생한다.
+// worldIndex 파라미터는 과거 스펙과의 호환을 위해 남겨두지만 내부적으로 사용되지 않는다.
+function playBgmForWorld(/* worldIndex */) {
+    bgmWantsToPlay = true;
+    if (!bgmLoaded) {
+        bgmLoaded = true;
+        bgmAudio.src = BGM_SRC;
+        bgmAudio.volume = effectiveVolume();
+        bgmAudio.load();
+    }
+    tryPlayBgm();
+}
+
+function stopBgm() {
+    bgmWantsToPlay = false;
+    bgmAudio.pause();
+}
+
+function playSfx(key) {
+    const a = sfxAudio[key];
+    if (!a) return;
+    if (getSavedMuted()) return;
+    try {
+        a.currentTime = 0;
+        const p = a.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+    } catch {}
+}
+
+// 첫 사용자 상호작용 시 오디오 컨텍스트를 "잠금 해제"하고, 의도가 있으면 BGM 재생
+function unlockAudioOnFirstInteraction() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    applyVolumeToAllAudio();
+    if (bgmWantsToPlay) tryPlayBgm();
+}
+document.addEventListener('click', unlockAudioOnFirstInteraction, { once: false, capture: true });
+document.addEventListener('keydown', unlockAudioOnFirstInteraction, { once: false, capture: true });
+
 // ==================== DOM 참조 ====================
 const authScreen = document.getElementById('auth-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
@@ -151,6 +312,10 @@ const clearExitBtn = document.getElementById('clear-exit-btn');
 const endingModal = document.getElementById('game-ending-modal');
 const endingExitBtn = document.getElementById('ending-exit-btn');
 const endingUserNameEl = document.getElementById('ending-username');
+const gameQuitBtn = document.getElementById('game-quit-btn');
+const quitConfirmModal = document.getElementById('quit-confirm-modal');
+const quitYesBtn = document.getElementById('quit-yes-btn');
+const quitNoBtn = document.getElementById('quit-no-btn');
 
 // ==================== 인증 UI ====================
 let authMode = 'login';
@@ -327,6 +492,7 @@ function showLobby() {
     modal.classList.add('hidden');
     clearModal.classList.add('hidden');
     endingModal.classList.add('hidden');
+    if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
     lobbyScreen.classList.remove('hidden');
 
     lobbyUserNameEl.innerText = getCurrentUser() || '';
@@ -337,18 +503,22 @@ function showLobby() {
     viewedWorldIndex = worldIndex;
 
     updateLobbyWorldView();
+    // 현재 보고 있는 공간의 BGM 재생 (이미 같은 곡이면 이어서 재생)
+    playBgmForWorld(viewedWorldIndex);
 
     // 게임 상태 정리
     boardElement.innerHTML = '';
     board = [];
 }
 
-// 화살표 버튼: 이전/다음 공간으로 뷰 이동
+// 화살표 버튼: 이전/다음 공간으로 뷰 이동 (+ 그 공간의 BGM 으로 전환)
 if (lobbyPrevBtn) {
     lobbyPrevBtn.addEventListener('click', () => {
         if (viewedWorldIndex > 1) {
             viewedWorldIndex -= 1;
             updateLobbyWorldView();
+            playBgmForWorld(viewedWorldIndex);
+            playSfx('button');
         }
     });
 }
@@ -358,6 +528,8 @@ if (lobbyNextBtn) {
         if (viewedWorldIndex < currentWorld) {
             viewedWorldIndex += 1;
             updateLobbyWorldView();
+            playBgmForWorld(viewedWorldIndex);
+            playSfx('button');
         }
     });
 }
@@ -369,6 +541,9 @@ function startStage(stageIndex) {
     userNameEl.innerText = getCurrentUser() || '';
     // 진행도는 100(완료)까지 저장될 수 있으므로 실제 플레이는 최대 99(스테이지 100)로 제한
     currentStageIndex = Math.min(stageIndex, 99);
+    // 스테이지는 해당 공간(world)의 BGM 으로 이어서 재생
+    const { worldIndex } = computeWorldInfo(currentStageIndex);
+    playBgmForWorld(worldIndex);
     initGame();
 }
 
@@ -378,6 +553,9 @@ function exitToAuth() {
     modal.classList.add('hidden');
     clearModal.classList.add('hidden');
     endingModal.classList.add('hidden');
+    if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
+    // 로그아웃/인증 화면 복귀 시 BGM 정지
+    stopBgm();
     authScreen.classList.remove('hidden');
 
     authUsername.value = '';
@@ -509,6 +687,7 @@ function handleCellClick(e) {
         revealAllMines();
         gameOver = true;
         resetBtn.innerText = '😵';
+        playSfx('mine');
         setTimeout(() => {
             modal.classList.remove('hidden');
         }, 500);
@@ -517,6 +696,7 @@ function handleCellClick(e) {
 
     // 안전 칸이 성공적으로 열리는 순간: 짧게 입을 벌려 웃는 반응
     flashOpenSmile();
+    playSfx('safe');
 
     revealCell(r, c);
     checkWin();
@@ -593,6 +773,7 @@ function checkWin() {
         gameOver = true;
         resetBtn.innerText = '😎';
         mineCountElement.innerText = '0';
+        playSfx('clear');
 
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
@@ -658,6 +839,58 @@ endingExitBtn.addEventListener('click', () => {
     endingModal.classList.add('hidden');
     showLobby();
 });
+
+// 게임 중 "나가기" 버튼: 확인 팝업을 띄운 뒤 예 선택 시에만 로비로 돌아감
+if (gameQuitBtn) {
+    gameQuitBtn.addEventListener('click', () => {
+        if (quitConfirmModal) quitConfirmModal.classList.remove('hidden');
+    });
+}
+if (quitYesBtn) {
+    quitYesBtn.addEventListener('click', () => {
+        if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
+        showLobby();
+    });
+}
+if (quitNoBtn) {
+    quitNoBtn.addEventListener('click', () => {
+        if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
+    });
+}
+
+// ==================== 볼륨 슬라이더 / 음소거 버튼 ====================
+// 로비·게임 양쪽에 같은 형태로 있음. 어느 쪽이든 바뀌면 저장값 갱신 + 양쪽 UI 동기화.
+['lobby-volume-slider', 'game-volume-slider'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', e => setVolume(Number(e.target.value)));
+});
+['lobby-volume-icon', 'game-volume-icon'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', () => toggleMute());
+});
+
+// 주요 UI 버튼에 클릭 SFX 를 위임 방식으로 붙인다.
+// 제외 대상:
+//   - 지뢰찾기 보드 셀(.cell): safe/mine SFX 로 이미 구분되어 재생됨
+//   - 볼륨 슬라이더/아이콘: 음소거 토글·볼륨 조절 시에는 클릭음 불필요
+//   - 인증 탭/폼: 로그인 전 상호작용은 BGM 해금 트리거로만 사용
+const NO_CLICK_SFX_SELECTOR = '.cell, .volume-icon, .volume-slider, .auth-tab, .auth-submit, .auth-form input';
+document.addEventListener('click', (e) => {
+    const el = e.target.closest('button');
+    if (!el) return;
+    if (el.matches(NO_CLICK_SFX_SELECTOR)) return;
+    // 이미 숨겨진 버튼이면 무시 (모달 닫힌 상태)
+    if (el.disabled) return;
+    playSfx('button');
+});
+
+// 초기 저장값이 없으면 디폴트(30%) 로 세팅한 뒤 UI 동기화
+if (localStorage.getItem(VOLUME_KEY) === null) saveVolume(DEFAULT_VOLUME);
+if (localStorage.getItem(MUTED_KEY) === null) saveMuted(false);
+applyVolumeToAllAudio();
+syncVolumeUI();
 
 // ==================== 부트스트랩 ====================
 if (getCurrentUser()) {
