@@ -1,3 +1,68 @@
+// ==================== 인증 / 저장 ====================
+const USERS_KEY = 'minesweeper_users';
+const CURRENT_USER_KEY = 'minesweeper_currentUser';
+
+async function hashPassword(pw) {
+    const enc = new TextEncoder().encode(pw);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+function getUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; }
+    catch { return {}; }
+}
+
+function setUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+function getCurrentUser() {
+    return localStorage.getItem(CURRENT_USER_KEY);
+}
+
+async function registerUser(username, password) {
+    const users = getUsers();
+    if (users[username]) throw new Error('이미 존재하는 아이디입니다.');
+    users[username] = {
+        passwordHash: await hashPassword(password),
+        progress: { stageIndex: 0 }
+    };
+    setUsers(users);
+}
+
+async function loginUser(username, password) {
+    const users = getUsers();
+    const u = users[username];
+    if (!u) throw new Error('존재하지 않는 아이디입니다.');
+    if (u.passwordHash !== await hashPassword(password)) {
+        throw new Error('비밀번호가 올바르지 않습니다.');
+    }
+    localStorage.setItem(CURRENT_USER_KEY, username);
+}
+
+function logoutUser() {
+    localStorage.removeItem(CURRENT_USER_KEY);
+}
+
+function loadProgress() {
+    const username = getCurrentUser();
+    if (!username) return 0;
+    return getUsers()[username]?.progress?.stageIndex ?? 0;
+}
+
+function saveProgress(stageIndex) {
+    const username = getCurrentUser();
+    if (!username) return;
+    const users = getUsers();
+    if (!users[username]) return;
+    users[username].progress = { stageIndex };
+    setUsers(users);
+}
+
+// ==================== 게임 상태 ====================
 let currentStageIndex = 0;
 let ROWS = 5;
 let COLS = 5;
@@ -7,6 +72,19 @@ let board = [];
 let gameOver = false;
 let minesLeft = MINES;
 let firstClick = true;
+
+// ==================== DOM 참조 ====================
+const authScreen = document.getElementById('auth-screen');
+const gameContainer = document.getElementById('game-container');
+const userNameEl = document.getElementById('user-name');
+const logoutBtn = document.getElementById('logout-btn');
+const authForm = document.getElementById('auth-form');
+const authUsername = document.getElementById('auth-username');
+const authPassword = document.getElementById('auth-password');
+const authMessage = document.getElementById('auth-message');
+const authSubmit = document.getElementById('auth-submit');
+const tabLogin = document.getElementById('tab-login');
+const tabRegister = document.getElementById('tab-register');
 
 const titleElement = document.getElementById('game-title');
 const boardElement = document.getElementById('board');
@@ -18,10 +96,116 @@ const exitBtn = document.getElementById('exit-btn');
 const clearModal = document.getElementById('game-clear-modal');
 const nextStageBtn = document.getElementById('next-stage-btn');
 const clearExitBtn = document.getElementById('clear-exit-btn');
+const endingModal = document.getElementById('game-ending-modal');
+const endingExitBtn = document.getElementById('ending-exit-btn');
 
+// ==================== 인증 UI ====================
+let authMode = 'login';
+
+function setAuthMode(mode) {
+    authMode = mode;
+    if (mode === 'login') {
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        authSubmit.innerText = '로그인';
+        authPassword.autocomplete = 'current-password';
+    } else {
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        authSubmit.innerText = '회원가입';
+        authPassword.autocomplete = 'new-password';
+    }
+    clearAuthMessage();
+}
+
+function clearAuthMessage() {
+    authMessage.innerText = '';
+    authMessage.classList.remove('error', 'success');
+}
+
+function showAuthError(msg) {
+    authMessage.innerText = msg;
+    authMessage.classList.add('error');
+    authMessage.classList.remove('success');
+}
+
+function showAuthSuccess(msg) {
+    authMessage.innerText = msg;
+    authMessage.classList.add('success');
+    authMessage.classList.remove('error');
+}
+
+tabLogin.addEventListener('click', () => setAuthMode('login'));
+tabRegister.addEventListener('click', () => setAuthMode('register'));
+
+authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = authUsername.value.trim();
+    const password = authPassword.value;
+
+    if (!username || !password) {
+        showAuthError('아이디와 비밀번호를 입력해주세요.');
+        return;
+    }
+    if (password.length < 4) {
+        showAuthError('비밀번호는 최소 4자 이상이어야 합니다.');
+        return;
+    }
+
+    authSubmit.disabled = true;
+    try {
+        if (authMode === 'register') {
+            await registerUser(username, password);
+            showAuthSuccess('회원가입 완료! 로그인해주세요.');
+            setTimeout(() => {
+                setAuthMode('login');
+                authPassword.value = '';
+                authPassword.focus();
+            }, 700);
+        } else {
+            await loginUser(username, password);
+            enterGame();
+        }
+    } catch (err) {
+        showAuthError(err.message);
+    } finally {
+        authSubmit.disabled = false;
+    }
+});
+
+logoutBtn.addEventListener('click', () => {
+    logoutUser();
+    exitToAuth();
+});
+
+function enterGame() {
+    authScreen.classList.add('hidden');
+    gameContainer.classList.remove('hidden');
+    userNameEl.innerText = getCurrentUser();
+    currentStageIndex = loadProgress();
+    initGame();
+}
+
+function exitToAuth() {
+    gameContainer.classList.add('hidden');
+    modal.classList.add('hidden');
+    clearModal.classList.add('hidden');
+    endingModal.classList.add('hidden');
+    authScreen.classList.remove('hidden');
+
+    authUsername.value = '';
+    authPassword.value = '';
+    setAuthMode('login');
+
+    boardElement.innerHTML = '';
+    board = [];
+    currentStageIndex = 0;
+}
+
+// ==================== 게임 로직 ====================
 function initGame() {
     let stageNum = currentStageIndex + 1;
-    
+
     if (stageNum <= 3) {
         ROWS = 3;
         COLS = 3;
@@ -31,7 +215,6 @@ function initGame() {
         COLS = 4;
         MINES = 2;
     } else {
-        // 5스테이지 이상
         ROWS = 5;
         COLS = 5;
         MINES = 3;
@@ -47,7 +230,6 @@ function initGame() {
     mineCountElement.innerText = minesLeft;
     resetBtn.innerText = '😊';
 
-    // CSS Grid 업데이트
     boardElement.style.gridTemplateColumns = `repeat(${COLS}, 40px)`;
     boardElement.style.gridTemplateRows = `repeat(${ROWS}, 40px)`;
 
@@ -58,7 +240,7 @@ function initGame() {
             cellElement.classList.add('cell');
             cellElement.dataset.r = r;
             cellElement.dataset.c = c;
-            
+
             cellElement.addEventListener('click', handleCellClick);
             cellElement.addEventListener('contextmenu', handleRightClick);
 
@@ -81,8 +263,7 @@ function placeMines(firstR, firstC) {
     while (minesPlaced < MINES) {
         const r = Math.floor(Math.random() * ROWS);
         const c = Math.floor(Math.random() * COLS);
-        
-        // 첫 클릭한 칸 주변 3x3까지 지뢰가 생성되지 않도록 안전 구역 확보 (선택사항, 5x5는 좁아서 자기 자신만 제외)
+
         if (!board[r][c].isMine && !(r === firstR && c === firstC)) {
             board[r][c].isMine = true;
             minesPlaced++;
@@ -127,7 +308,6 @@ function handleCellClick(e) {
         revealAllMines();
         gameOver = true;
         resetBtn.innerText = '😵';
-        // 0.5초 딜레이 후 팝업 띄우기
         setTimeout(() => {
             modal.classList.remove('hidden');
         }, 500);
@@ -139,7 +319,7 @@ function handleCellClick(e) {
 }
 
 function handleRightClick(e) {
-    e.preventDefault(); // 우클릭 메뉴 방지
+    e.preventDefault();
     if (gameOver || firstClick) return;
 
     const r = parseInt(e.target.dataset.r);
@@ -175,7 +355,6 @@ function revealCell(r, c) {
         cell.element.innerText = cell.neighborMines;
         cell.element.dataset.count = cell.neighborMines;
     } else {
-        // 주변 빈 칸 연속으로 열기
         for (let dr = -1; dr <= 1; dr++) {
             for (let dc = -1; dc <= 1; dc++) {
                 revealCell(r + dr, c + dc);
@@ -192,7 +371,6 @@ function revealAllMines() {
                 cell.element.classList.add('revealed', 'mine');
                 cell.element.innerText = '💣';
             } else if (cell.isFlagged && !cell.isMine) {
-                // 잘못된 깃발 표시
                 cell.element.innerText = '❌';
             }
         }
@@ -206,14 +384,12 @@ function checkWin() {
             if (board[r][c].isRevealed) revealedCount++;
         }
     }
-    
-    // 전체 칸 수에서 지뢰 개수를 뺀 만큼 칸을 열었으면 승리
+
     if (revealedCount === (ROWS * COLS) - MINES) {
         gameOver = true;
         resetBtn.innerText = '😎';
         mineCountElement.innerText = '0';
-        
-        // 남은 지뢰에 자동으로 깃발 꽂기
+
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (board[r][c].isMine && !board[r][c].isFlagged) {
@@ -222,9 +398,14 @@ function checkWin() {
                 }
             }
         }
+
+        // 다음 스테이지를 계정에 저장 (100 이상은 99로 캡)
+        const nextIndex = Math.min(currentStageIndex + 1, 99);
+        saveProgress(nextIndex);
+
         setTimeout(() => {
             if (currentStageIndex + 1 >= 100) {
-                document.getElementById('game-ending-modal').classList.remove('hidden');
+                endingModal.classList.remove('hidden');
             } else {
                 clearModal.classList.remove('hidden');
             }
@@ -232,6 +413,7 @@ function checkWin() {
     }
 }
 
+// ==================== 이벤트 바인딩 ====================
 resetBtn.addEventListener('click', initGame);
 
 retryBtn.addEventListener('click', () => {
@@ -241,7 +423,8 @@ retryBtn.addEventListener('click', () => {
 
 exitBtn.addEventListener('click', () => {
     modal.classList.add('hidden');
-    document.body.innerHTML = '<h1 style="color: white; text-align: center; margin-top: 40vh; font-family: sans-serif; line-height: 1.5;">게임을 종료했습니다.<br><span style="font-size: 1rem; color: #a0a0b0;">브라우저 탭을 닫아주세요.</span></h1>';
+    logoutUser();
+    exitToAuth();
 });
 
 nextStageBtn.addEventListener('click', () => {
@@ -252,13 +435,17 @@ nextStageBtn.addEventListener('click', () => {
 
 clearExitBtn.addEventListener('click', () => {
     clearModal.classList.add('hidden');
-    document.body.innerHTML = '<h1 style="color: white; text-align: center; margin-top: 40vh; font-family: sans-serif; line-height: 1.5;">게임을 종료했습니다.<br><span style="font-size: 1rem; color: #a0a0b0;">브라우저 탭을 닫아주세요.</span></h1>';
+    logoutUser();
+    exitToAuth();
 });
 
-document.getElementById('ending-exit-btn').addEventListener('click', () => {
-    document.getElementById('game-ending-modal').classList.add('hidden');
-    document.body.innerHTML = '<h1 style="color: white; text-align: center; margin-top: 40vh; font-family: sans-serif; line-height: 1.5;">게임을 종료했습니다.<br><span style="font-size: 1rem; color: #a0a0b0;">브라우저 탭을 닫아주세요.</span></h1>';
+endingExitBtn.addEventListener('click', () => {
+    endingModal.classList.add('hidden');
+    logoutUser();
+    exitToAuth();
 });
 
-// 게임 시작
-initGame();
+// ==================== 부트스트랩 ====================
+if (getCurrentUser()) {
+    enterGame();
+}

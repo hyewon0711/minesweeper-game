@@ -8,7 +8,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="game-container">
+    <!-- 로그인 / 회원가입 화면 -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-container">
+            <h1 class="auth-title">지뢰찾기</h1>
+            <div class="auth-tabs">
+                <button id="tab-login" class="auth-tab active" type="button">로그인</button>
+                <button id="tab-register" class="auth-tab" type="button">회원가입</button>
+            </div>
+            <form id="auth-form" class="auth-form" autocomplete="off">
+                <input id="auth-username" type="text" placeholder="아이디" required maxlength="20" autocomplete="username">
+                <input id="auth-password" type="password" placeholder="비밀번호 (4자 이상)" required maxlength="50" autocomplete="current-password">
+                <p id="auth-message" class="auth-message"></p>
+                <button type="submit" id="auth-submit" class="auth-submit">로그인</button>
+            </form>
+            <p class="auth-note">계정과 진행상황은 이 브라우저에만 저장됩니다.</p>
+        </div>
+    </div>
+
+    <div id="game-container" class="game-container hidden">
+        <div class="user-bar">
+            <span class="user-info">👤 <span id="user-name"></span></span>
+            <button id="logout-btn" class="logout-btn" type="button">로그아웃</button>
+        </div>
         <h1 id="game-title">지뢰찾기 - 스테이지 1</h1>
         <div class="header">
             <div class="status-box">지뢰: <span id="mine-count">3</span></div>
@@ -51,7 +73,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
 </body>
 </html>
