@@ -78,7 +78,7 @@ const authScreen = document.getElementById('auth-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
 const lobbyUserNameEl = document.getElementById('lobby-user-name');
 const lobbyLogoutBtn = document.getElementById('lobby-logout-btn');
-const stage1Btn = document.getElementById('stage-1-btn');
+const stageBtn = document.getElementById('stage-btn');
 const gameContainer = document.getElementById('game-container');
 const userNameEl = document.getElementById('user-name');
 const logoutBtn = document.getElementById('logout-btn');
@@ -187,7 +187,13 @@ lobbyLogoutBtn.addEventListener('click', () => {
     exitToAuth();
 });
 
-stage1Btn.addEventListener('click', () => startStage(0));
+stageBtn.addEventListener('click', () => startStage(loadProgress()));
+
+function refreshStageButton() {
+    const idx = loadProgress();
+    const stageNum = idx + 1;
+    stageBtn.innerText = `스테이지 ${stageNum}`;
+}
 
 function showLobby() {
     authScreen.classList.add('hidden');
@@ -198,6 +204,7 @@ function showLobby() {
     lobbyScreen.classList.remove('hidden');
 
     lobbyUserNameEl.innerText = getCurrentUser() || '';
+    refreshStageButton();
 
     // 게임 상태 정리
     boardElement.innerHTML = '';
