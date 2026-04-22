@@ -1,12 +1,17 @@
 :root {
-    --bg-color: #1a1a2e;
-    --container-bg: #16213e;
-    --cell-bg: #0f3460;
-    --cell-hover: #1b4b8a;
-    --cell-revealed: #e94560;
-    --cell-empty: #2a2a4a;
-    --text-color: #e2e2e2;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* 파스텔 팔레트 (Steven Universe 느낌의 이미지 참조) */
+    --bg-color: #F5DAC6;          /* 피치 크림 (하늘) */
+    --container-bg: #F5BDC6;      /* 소프트 핑크 (패널) */
+    --cell-bg: #A06B8E;           /* 더스티 모브 (손 그림자) */
+    --cell-hover: #C49BB2;        /* 라이터 모브 */
+    --cell-revealed: #D85151;     /* 셔츠 레드 (지뢰) */
+    --cell-empty: #F3D1BB;        /* 웜 크림 (오픈된 칸) */
+    --text-color: #3E2A3A;        /* 딥 플럼 (텍스트) */
+    --muted-text: #8A6F85;        /* 뮤트 모브 (보조 텍스트) */
+    --accent-sage: #7FA89C;       /* 세이지 그린 (긍정 액션) */
+    --accent-sage-hover: #668C82;
+    --primary-hover: #8A5573;     /* 모브 버튼 호버 */
+    --shadow: 0 8px 32px rgba(107, 74, 94, 0.25);
 }
 
 * {
@@ -62,6 +67,7 @@ body {
     font-weight: 700;
     letter-spacing: 2px;
     font-size: 1.8rem;
+    color: var(--text-color);
 }
 
 .auth-tabs {
@@ -77,7 +83,7 @@ body {
     flex: 1;
     padding: 0.6rem;
     background: transparent;
-    color: #a0a0b0;
+    color: var(--muted-text);
     border: none;
     border-radius: 0.4rem;
     cursor: pointer;
@@ -89,7 +95,7 @@ body {
 
 .auth-tab.active {
     background-color: var(--cell-bg);
-    color: var(--text-color);
+    color: white;
 }
 
 .auth-form {
@@ -115,7 +121,7 @@ body {
 }
 
 .auth-form input::placeholder {
-    color: #6c6c80;
+    color: var(--muted-text);
 }
 
 .auth-message {
@@ -125,12 +131,12 @@ body {
     margin: 0;
 }
 
-.auth-message.error { color: #e74c3c; }
-.auth-message.success { color: #2ecc71; }
+.auth-message.error { color: var(--cell-revealed); }
+.auth-message.success { color: var(--accent-sage); }
 
 .auth-submit {
     padding: 0.9rem;
-    background-color: #3498db;
+    background-color: var(--cell-bg);
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -141,13 +147,13 @@ body {
     transition: background-color 0.2s, transform 0.1s;
 }
 
-.auth-submit:hover { background-color: #2980b9; }
+.auth-submit:hover { background-color: var(--primary-hover); }
 .auth-submit:active { transform: scale(0.98); }
 
 .auth-note {
     margin-top: 1.2rem;
     font-size: 0.8rem;
-    color: #6c6c80;
+    color: var(--muted-text);
 }
 
 /* ==================== 사용자 바 ==================== */
@@ -170,7 +176,7 @@ body {
 .logout-btn {
     padding: 0.4rem 0.9rem;
     background-color: var(--cell-bg);
-    color: var(--text-color);
+    color: white;
     border: none;
     border-radius: 0.4rem;
     cursor: pointer;
@@ -180,7 +186,7 @@ body {
     transition: background-color 0.2s;
 }
 
-.logout-btn:hover { background-color: var(--cell-hover); }
+.logout-btn:hover { background-color: var(--primary-hover); }
 
 /* ==================== 로비 (스테이지 선택) ==================== */
 .lobby-screen {
@@ -196,6 +202,7 @@ body {
 
 .lobby-title {
     margin-bottom: 1rem;
+    color: var(--text-color);
 }
 
 .lobby-body {
@@ -210,7 +217,7 @@ body {
 }
 
 .lobby-hint {
-    color: #6c6c80;
+    color: var(--muted-text);
     font-size: 0.9rem;
     text-align: center;
 }
@@ -224,7 +231,7 @@ body {
 
 .stage-btn {
     padding: 0.9rem 2rem;
-    background-color: #3498db;
+    background-color: var(--cell-bg);
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -236,13 +243,14 @@ body {
     min-width: 120px;
 }
 
-.stage-btn:hover { background-color: #2980b9; }
+.stage-btn:hover { background-color: var(--primary-hover); }
 .stage-btn:active { transform: scale(0.98); }
 
 h1 {
     margin-bottom: 1.5rem;
     font-weight: 700;
     letter-spacing: 2px;
+    color: var(--text-color);
 }
 
 .header {
@@ -260,6 +268,7 @@ h1 {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     min-width: 80px;
+    color: var(--text-color);
 }
 
 .reset-btn {
@@ -298,6 +307,7 @@ h1 {
     font-size: 1.2rem;
     transition: background-color 0.2s, transform 0.1s;
     user-select: none;
+    color: white;
 }
 
 .cell:hover {
@@ -307,28 +317,29 @@ h1 {
 .cell.revealed {
     background-color: var(--cell-empty);
     cursor: default;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: inset 0 2px 4px rgba(107, 74, 94, 0.15);
+    color: var(--text-color);
 }
 
 .cell.mine {
     background-color: var(--cell-revealed);
 }
 
-/* 숫자별 색상 설정 (모던한 느낌) */
-.cell[data-count="1"] { color: #3498db; }
-.cell[data-count="2"] { color: #2ecc71; }
-.cell[data-count="3"] { color: #e74c3c; }
-.cell[data-count="4"] { color: #9b59b6; }
-.cell[data-count="5"] { color: #f1c40f; }
-.cell[data-count="6"] { color: #e67e22; }
-.cell[data-count="7"] { color: #1abc9c; }
-.cell[data-count="8"] { color: #95a5a6; }
+/* 숫자별 색상 (크림 위에서 잘 보이도록 파스텔 톤) */
+.cell[data-count="1"] { color: #5B7BA5; }  /* 소프트 블루 */
+.cell[data-count="2"] { color: #5D9188; }  /* 세이지 */
+.cell[data-count="3"] { color: #D85151; }  /* 레드 */
+.cell[data-count="4"] { color: #8A5E7A; }  /* 모브 */
+.cell[data-count="5"] { color: #C99234; }  /* 골드 */
+.cell[data-count="6"] { color: #D18450; }  /* 웜 오렌지 */
+.cell[data-count="7"] { color: #4A9A8E; }  /* 다크 틸 */
+.cell[data-count="8"] { color: #6B4A5E; }  /* 딥 플럼 */
 
 /* 팝업창(모달) 스타일 */
 .modal {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(62, 42, 58, 0.4);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -347,7 +358,7 @@ h1 {
     padding: 2.5rem;
     border-radius: 1rem;
     text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(107, 74, 94, 0.3);
     transform: translateY(0);
     transition: transform 0.3s ease;
 }
@@ -364,7 +375,7 @@ h1 {
 
 .modal-content p {
     margin-bottom: 2rem;
-    color: #a0a0b0;
+    color: var(--muted-text);
 }
 
 .modal-buttons {
@@ -385,37 +396,37 @@ h1 {
 }
 
 #retry-btn {
-    background-color: #3498db;
+    background-color: var(--cell-bg);
     color: white;
 }
 
-#retry-btn:hover { background-color: #2980b9; }
+#retry-btn:hover { background-color: var(--primary-hover); }
 
 #exit-btn {
     background-color: var(--cell-empty);
-    color: white;
+    color: var(--text-color);
 }
 
-#exit-btn:hover { background-color: #3a3a5a; }
+#exit-btn:hover { background-color: #E6C3A8; }
 
 .modal-buttons button:active {
     transform: scale(0.95);
 }
 
 #next-stage-btn {
-    background-color: #2ecc71;
+    background-color: var(--accent-sage);
     color: white;
 }
-#next-stage-btn:hover { background-color: #27ae60; }
+#next-stage-btn:hover { background-color: var(--accent-sage-hover); }
 
 #clear-exit-btn {
     background-color: var(--cell-empty);
-    color: white;
+    color: var(--text-color);
 }
-#clear-exit-btn:hover { background-color: #3a3a5a; }
+#clear-exit-btn:hover { background-color: #E6C3A8; }
 
 #ending-exit-btn {
-    background-color: #3498db;
+    background-color: var(--cell-bg);
     color: white;
 }
-#ending-exit-btn:hover { background-color: #2980b9; }
+#ending-exit-btn:hover { background-color: var(--primary-hover); }
