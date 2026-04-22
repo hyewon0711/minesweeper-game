@@ -521,3 +521,18 @@ h1 {
     color: white;
 }
 #ending-exit-btn:hover { background-color: var(--primary-hover); }
+
+/* 엔딩 모달 하단 보상 안내 박스
+   ※ .modal-content p 규칙(margin-bottom:2rem, color:muted-text)을 이기려면
+   이 셀렉터도 동일하게 .modal-content p.xxx 형태로 특정해야 한다. */
+.modal-content p.ending-reward-note {
+    margin: 0.3rem 0 1.6rem;
+    padding: 0.85rem 1rem;
+    background-color: #E8F1EE;
+    border-left: 3px solid var(--accent-sage);
+    border-radius: 0.4rem;
+    color: var(--text-color);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    text-align: left;
+}

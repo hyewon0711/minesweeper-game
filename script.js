@@ -150,6 +150,7 @@ const nextStageBtn = document.getElementById('next-stage-btn');
 const clearExitBtn = document.getElementById('clear-exit-btn');
 const endingModal = document.getElementById('game-ending-modal');
 const endingExitBtn = document.getElementById('ending-exit-btn');
+const endingUserNameEl = document.getElementById('ending-username');
 
 // ==================== 인증 UI ====================
 let authMode = 'login';
@@ -602,6 +603,9 @@ function checkWin() {
             // 모든 공간을 다 채웠으면 애니메이션이 끝난 뒤 엔딩 모달 노출
             if (nextIndex >= 100) {
                 setTimeout(() => {
+                    if (endingUserNameEl) {
+                        endingUserNameEl.innerText = getCurrentUser() || '';
+                    }
                     endingModal.classList.remove('hidden');
                 }, 1700);
             }
