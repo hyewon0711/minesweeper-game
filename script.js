@@ -116,6 +116,11 @@ const lobbyLogoutBtn = document.getElementById('lobby-logout-btn');
 const lobbyScene = document.getElementById('lobby-scene');
 const lobbyWorldNameEl = document.getElementById('lobby-world-name');
 const lobbyWorldProgressEl = document.getElementById('lobby-world-progress');
+const lobbyPrevBtn = document.getElementById('lobby-prev-btn');
+const lobbyNextBtn = document.getElementById('lobby-next-btn');
+
+// 로비에서 현재 보고 있는 공간의 인덱스 (1..10). 기본값은 진행 중인 공간.
+let viewedWorldIndex = 1;
 const stageBtn = document.getElementById('stage-btn');
 const gameContainer = document.getElementById('game-container');
 const userNameEl = document.getElementById('user-name');
@@ -256,12 +261,41 @@ function renderLobbyScene(worldIndex, revealLevel) {
 
 function updateLobbyWorldView() {
     const progress = loadProgress();
-    const { worldIndex, revealLevel, stagesCleared } = computeWorldInfo(progress);
-    const numeral = WORLD_NUMERALS[worldIndex - 1] || '';
-    const name = WORLD_NAMES[worldIndex - 1] || '';
+    const current = computeWorldInfo(progress);
+    const currentWorld = current.worldIndex;
+
+    // viewedWorldIndex 를 안전하게 클램프 (1 ~ currentWorld)
+    if (viewedWorldIndex < 1) viewedWorldIndex = 1;
+    if (viewedWorldIndex > currentWorld) viewedWorldIndex = currentWorld;
+
+    // 지금 보고 있는 공간의 revealLevel / stagesCleared 계산:
+    //   - 이미 클리어(완성)한 지난 공간은 full reveal (10/10)
+    //   - 현재 진행 중인 공간은 실제 진행도
+    let revealLevel;
+    let stagesCleared;
+    if (viewedWorldIndex < currentWorld) {
+        revealLevel = 10;
+        stagesCleared = 10;
+    } else {
+        revealLevel = current.revealLevel;
+        stagesCleared = current.stagesCleared;
+    }
+
+    const numeral = WORLD_NUMERALS[viewedWorldIndex - 1] || '';
+    const name = WORLD_NAMES[viewedWorldIndex - 1] || '';
     if (lobbyWorldNameEl) lobbyWorldNameEl.innerText = `공간 ${numeral} ${name}`;
     if (lobbyWorldProgressEl) lobbyWorldProgressEl.innerText = `${stagesCleared} / 10`;
-    renderLobbyScene(worldIndex, revealLevel);
+    renderLobbyScene(viewedWorldIndex, revealLevel);
+
+    // 화살표 표시 제어:
+    //   - 왼쪽: viewedWorldIndex > 1 이면 노출 (이전 완성 공간 탐색)
+    //   - 오른쪽: viewedWorldIndex < currentWorld 이면 노출 (다음 공간은 이미 열린 경우만)
+    if (lobbyPrevBtn) {
+        lobbyPrevBtn.classList.toggle('hidden', viewedWorldIndex <= 1);
+    }
+    if (lobbyNextBtn) {
+        lobbyNextBtn.classList.toggle('hidden', viewedWorldIndex >= currentWorld);
+    }
 }
 
 function showLobby() {
@@ -274,11 +308,35 @@ function showLobby() {
 
     lobbyUserNameEl.innerText = getCurrentUser() || '';
     refreshStageButton();
+
+    // 로비에 들어올 때마다 현재 진행 중인 공간으로 뷰를 리셋
+    const { worldIndex } = computeWorldInfo(loadProgress());
+    viewedWorldIndex = worldIndex;
+
     updateLobbyWorldView();
 
     // 게임 상태 정리
     boardElement.innerHTML = '';
     board = [];
+}
+
+// 화살표 버튼: 이전/다음 공간으로 뷰 이동
+if (lobbyPrevBtn) {
+    lobbyPrevBtn.addEventListener('click', () => {
+        if (viewedWorldIndex > 1) {
+            viewedWorldIndex -= 1;
+            updateLobbyWorldView();
+        }
+    });
+}
+if (lobbyNextBtn) {
+    lobbyNextBtn.addEventListener('click', () => {
+        const { worldIndex: currentWorld } = computeWorldInfo(loadProgress());
+        if (viewedWorldIndex < currentWorld) {
+            viewedWorldIndex += 1;
+            updateLobbyWorldView();
+        }
+    });
 }
 
 function startStage(stageIndex) {

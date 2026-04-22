@@ -34,7 +34,11 @@
         </div>
         <h1 class="lobby-title">지뢰찾기</h1>
         <div class="lobby-body">
-            <div id="lobby-scene" class="lobby-scene"></div>
+            <div class="lobby-scene-nav">
+                <button id="lobby-prev-btn" class="scene-nav-btn scene-nav-prev hidden" type="button" aria-label="이전 공간">◀</button>
+                <div id="lobby-scene" class="lobby-scene"></div>
+                <button id="lobby-next-btn" class="scene-nav-btn scene-nav-next hidden" type="button" aria-label="다음 공간">▶</button>
+            </div>
             <div class="lobby-scene-info">
                 <div class="world-name" id="lobby-world-name">공간 ① 아늑한 서재</div>
                 <div class="world-progress" id="lobby-world-progress">0 / 10</div>

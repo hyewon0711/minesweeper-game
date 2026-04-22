@@ -223,13 +223,14 @@ body {
 }
 
 .lobby-scene {
-    width: 100%;
+    flex: 1;
     aspect-ratio: 160 / 100;
     border-radius: 0.4rem;
     overflow: hidden;
     background-color: #1A1630;
     box-shadow: inset 0 2px 4px rgba(26, 45, 62, 0.25);
     position: relative;
+    min-width: 0;
 }
 
 .lobby-scene svg {
@@ -237,6 +238,46 @@ body {
     height: 100%;
     display: block;
     image-rendering: pixelated;
+}
+
+.lobby-scene-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+}
+
+.scene-nav-btn {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 40px;
+    padding: 0;
+    background-color: var(--cell-bg);
+    color: white;
+    border: none;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+.scene-nav-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.scene-nav-btn:active {
+    transform: scale(0.95);
+}
+
+.scene-nav-btn.hidden {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .lobby-scene-info {
