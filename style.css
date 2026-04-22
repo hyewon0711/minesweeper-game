@@ -1,17 +1,17 @@
 :root {
-    /* 파스텔 팔레트 (Steven Universe 느낌의 이미지 참조) */
-    --bg-color: #F5DAC6;          /* 피치 크림 (하늘) */
-    --container-bg: #F5BDC6;      /* 소프트 핑크 (패널) */
-    --cell-bg: #A06B8E;           /* 더스티 모브 (손 그림자) */
-    --cell-hover: #C49BB2;        /* 라이터 모브 */
-    --cell-revealed: #D85151;     /* 셔츠 레드 (지뢰) */
-    --cell-empty: #F3D1BB;        /* 웜 크림 (오픈된 칸) */
-    --text-color: #3E2A3A;        /* 딥 플럼 (텍스트) */
-    --muted-text: #8A6F85;        /* 뮤트 모브 (보조 텍스트) */
-    --accent-sage: #7FA89C;       /* 세이지 그린 (긍정 액션) */
-    --accent-sage-hover: #668C82;
-    --primary-hover: #8A5573;     /* 모브 버튼 호버 */
-    --shadow: 0 8px 32px rgba(107, 74, 94, 0.25);
+    /* 아이시 팔레트 (차가운 새벽 이미지 참조) */
+    --bg-color: #C8DDE4;          /* 아이시 스카이 블루 (하늘) */
+    --container-bg: #EEF4F6;      /* 프로스트 화이트 (패널) */
+    --cell-bg: #2E4B5C;           /* 딥 슬레이트 (손 그림자) */
+    --cell-hover: #496D80;        /* 라이트 슬레이트 */
+    --cell-revealed: #CC4A42;     /* 셔츠 레드 (지뢰) */
+    --cell-empty: #DAE8EC;        /* 아이시 페일 (오픈된 칸) */
+    --text-color: #1A2D3E;        /* 딥 네이비 (텍스트) */
+    --muted-text: #5C7A8A;        /* 뮤트 블루 (보조 텍스트) */
+    --accent-sage: #5D9188;       /* 세이지 틸 (긍정 액션) */
+    --accent-sage-hover: #4A7670;
+    --primary-hover: #3F5F73;     /* 슬레이트 버튼 호버 */
+    --shadow: 0 8px 32px rgba(26, 45, 62, 0.2);
 }
 
 * {
@@ -317,7 +317,7 @@ h1 {
 .cell.revealed {
     background-color: var(--cell-empty);
     cursor: default;
-    box-shadow: inset 0 2px 4px rgba(107, 74, 94, 0.15);
+    box-shadow: inset 0 2px 4px rgba(26, 45, 62, 0.15);
     color: var(--text-color);
 }
 
@@ -325,21 +325,21 @@ h1 {
     background-color: var(--cell-revealed);
 }
 
-/* 숫자별 색상 (크림 위에서 잘 보이도록 파스텔 톤) */
-.cell[data-count="1"] { color: #5B7BA5; }  /* 소프트 블루 */
-.cell[data-count="2"] { color: #5D9188; }  /* 세이지 */
-.cell[data-count="3"] { color: #D85151; }  /* 레드 */
-.cell[data-count="4"] { color: #8A5E7A; }  /* 모브 */
-.cell[data-count="5"] { color: #C99234; }  /* 골드 */
-.cell[data-count="6"] { color: #D18450; }  /* 웜 오렌지 */
-.cell[data-count="7"] { color: #4A9A8E; }  /* 다크 틸 */
-.cell[data-count="8"] { color: #6B4A5E; }  /* 딥 플럼 */
+/* 숫자별 색상 (아이시 페일 위에서 잘 보이도록 쿨톤) */
+.cell[data-count="1"] { color: #2E4B5C; }  /* 딥 슬레이트 */
+.cell[data-count="2"] { color: #5D9188; }  /* 세이지 틸 */
+.cell[data-count="3"] { color: #CC4A42; }  /* 레드 */
+.cell[data-count="4"] { color: #6B5E8A; }  /* 쿨 모브 */
+.cell[data-count="5"] { color: #C9A234; }  /* 골드 */
+.cell[data-count="6"] { color: #CF7A40; }  /* 웜 오렌지 */
+.cell[data-count="7"] { color: #3A8A7E; }  /* 다크 틸 */
+.cell[data-count="8"] { color: #4A5E6B; }  /* 슬레이트 그레이 */
 
 /* 팝업창(모달) 스타일 */
 .modal {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(62, 42, 58, 0.4);
+    background-color: rgba(26, 45, 62, 0.45);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -358,7 +358,7 @@ h1 {
     padding: 2.5rem;
     border-radius: 1rem;
     text-align: center;
-    box-shadow: 0 10px 40px rgba(107, 74, 94, 0.3);
+    box-shadow: 0 10px 40px rgba(26, 45, 62, 0.3);
     transform: translateY(0);
     transition: transform 0.3s ease;
 }
@@ -407,7 +407,7 @@ h1 {
     color: var(--text-color);
 }
 
-#exit-btn:hover { background-color: #E6C3A8; }
+#exit-btn:hover { background-color: #BFD3DA; }
 
 .modal-buttons button:active {
     transform: scale(0.95);
@@ -423,7 +423,7 @@ h1 {
     background-color: var(--cell-empty);
     color: var(--text-color);
 }
-#clear-exit-btn:hover { background-color: #E6C3A8; }
+#clear-exit-btn:hover { background-color: #BFD3DA; }
 
 #ending-exit-btn {
     background-color: var(--cell-bg);
