@@ -58,7 +58,20 @@
         <div class="header">
             <div class="status-box">지뢰: <span id="mine-count">3</span></div>
             <button id="reset-btn" class="reset-btn">😊</button>
-            <div class="status-box"></div>
+            <div class="status-box hint-box" title="오른쪽 클릭으로 깃발 꽂기">
+                <svg class="hint-mouse" viewBox="0 0 22 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <!-- 마우스 외곽선 -->
+                    <path d="M 11 1 C 16 1 20 5 20 10 L 20 20 C 20 24 16 27 11 27 C 6 27 2 24 2 20 L 2 10 C 2 5 6 1 11 1 Z"
+                          fill="white" stroke="#1A2D3E" stroke-width="1.4"/>
+                    <!-- 오른쪽 버튼 강조 (세이지 틸) -->
+                    <path d="M 11 1.7 C 15.5 1.7 19.3 5.3 19.3 10 L 19.3 11.7 L 11 11.7 Z" fill="#5D9188"/>
+                    <!-- 버튼 분할선 -->
+                    <line x1="11" y1="1.5" x2="11" y2="11.7" stroke="#1A2D3E" stroke-width="1.1"/>
+                    <line x1="2.7" y1="11.7" x2="19.3" y2="11.7" stroke="#1A2D3E" stroke-width="1.1"/>
+                </svg>
+                <span class="hint-arrow">→</span>
+                <span class="hint-flag">🚩</span>
+            </div>
         </div>
         <div id="board" class="board"></div>
     </div>

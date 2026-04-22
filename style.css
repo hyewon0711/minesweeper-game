@@ -374,6 +374,35 @@ h1 {
     transform: scale(0.9);
 }
 
+/* 우클릭 → 깃발 안내 (헤더 오른쪽) */
+.hint-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-size: 1rem;
+    padding: 0 0.2rem;
+}
+
+.hint-mouse {
+    width: 20px;
+    height: 26px;
+    flex-shrink: 0;
+    display: block;
+}
+
+.hint-arrow {
+    color: var(--muted-text);
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.hint-flag {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
 .board {
     display: grid;
     /* 기본 5x5 그리드 */
