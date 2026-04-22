@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지뢰찾기 (Minesweeper)</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <h1 id="game-title">지뢰찾기 - 스테이지 1</h1>
+        <div class="header">
+            <div class="status-box">지뢰: <span id="mine-count">3</span></div>
+            <button id="reset-btn" class="reset-btn">😊</button>
+            <div class="status-box"></div>
+        </div>
+        <div id="board" class="board"></div>
+    </div>
+    <!-- 게임 오버 팝업창 -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>게임 오버! 💥</h2>
+            <p>지뢰를 밟았습니다.</p>
+            <div class="modal-buttons">
+                <button id="retry-btn">재시도</button>
+                <button id="exit-btn">나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 클리어 팝업창 -->
+    <div id="game-clear-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>스테이지 클리어! 🎉</h2>
+            <p>모든 지뢰를 찾았습니다!</p>
+            <div class="modal-buttons">
+                <button id="next-stage-btn">다음 스테이지</button>
+                <button id="clear-exit-btn">나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 엔딩 팝업창 -->
+    <div id="game-ending-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>플레이 해주셔서 감사합니다! 🎉</h2>
+            <p>정식 게임 발매를 기다려주세요!</p>
+            <div class="modal-buttons">
+                <button id="ending-exit-btn">확인</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

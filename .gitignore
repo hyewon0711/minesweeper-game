@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# Node (future-proofing if tooling is added)
+node_modules/
+
+# Empty placeholder file from the folder
+/지뢰찾기
+
+# Claude Code local settings (shared settings can be committed at .claude/settings.json)
+.claude/settings.local.json
