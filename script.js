@@ -78,14 +78,23 @@ const WORLD_NAMES = [
 const WORLD_NUMERALS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
 // stageIndex: 0..100 (진행 저장 기준, 100 = 모든 스테이지 완료)
-// 반환: { worldIndex: 1..10, revealLevel: 0..10 } — 해당 공간에서 "해금된" 요소 수준
+// 반환: {
+//   worldIndex: 1..10,             해당 시점에 보여줄 공간
+//   revealLevel: 1..10,            SVG에서 data-min-stage <= revealLevel 인 요소만 표시
+//   stagesCleared: 0..10           현재 공간에서 클리어한 스테이지 수 (진행도 텍스트용)
+// }
+// 규칙:
+//   - 새 공간 입장 시(stagesCleared=0)에도 base(level 1)가 보여 "어떤 공간인지" 알 수 있음
+//   - 한 스테이지를 깰 때마다 revealLevel 이 1 증가하여 디테일이 하나씩 추가됨
+//   - 해당 공간의 10번째 스테이지를 클리어하면 다음 공간의 base 로 전환
 function computeWorldInfo(stageIndex) {
     if (stageIndex >= 100) {
-        return { worldIndex: 10, revealLevel: 10 };
+        return { worldIndex: 10, revealLevel: 10, stagesCleared: 10 };
     }
     const worldIndex = Math.floor(stageIndex / 10) + 1;
-    const revealLevel = stageIndex % 10;
-    return { worldIndex, revealLevel };
+    const stagesCleared = stageIndex % 10;       // 0..9
+    const revealLevel = stagesCleared + 1;       // 1..10 (base 부터 시작)
+    return { worldIndex, revealLevel, stagesCleared };
 }
 
 // ==================== 게임 상태 ====================
@@ -247,11 +256,11 @@ function renderLobbyScene(worldIndex, revealLevel) {
 
 function updateLobbyWorldView() {
     const progress = loadProgress();
-    const { worldIndex, revealLevel } = computeWorldInfo(progress);
+    const { worldIndex, revealLevel, stagesCleared } = computeWorldInfo(progress);
     const numeral = WORLD_NUMERALS[worldIndex - 1] || '';
     const name = WORLD_NAMES[worldIndex - 1] || '';
     if (lobbyWorldNameEl) lobbyWorldNameEl.innerText = `공간 ${numeral} ${name}`;
-    if (lobbyWorldProgressEl) lobbyWorldProgressEl.innerText = `${revealLevel} / 10`;
+    if (lobbyWorldProgressEl) lobbyWorldProgressEl.innerText = `${stagesCleared} / 10`;
     renderLobbyScene(worldIndex, revealLevel);
 }
 
