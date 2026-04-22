@@ -656,3 +656,25 @@ h1 {
     line-height: 1.55;
     text-align: left;
 }
+
+/* 첫 로그인 인트로 모달의 스토리 문단.
+   ending-reward-note 와 같은 방식으로 기본 p 규칙을 이기도록 .modal-content p.xxx
+   로 특이도를 맞춘다. 좌측 정렬·넉넉한 줄간격으로 읽기 편하게. */
+.modal-content p.intro-story {
+    margin: 0.2rem 0 1.4rem;
+    padding: 1rem 1.1rem;
+    background-color: #E8F1EE;
+    border-left: 3px solid var(--accent-sage);
+    border-radius: 0.4rem;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    text-align: left;
+    white-space: normal;
+}
+
+#intro-confirm-btn {
+    background-color: var(--cell-bg);
+    color: white;
+}
+#intro-confirm-btn:hover { background-color: var(--primary-hover); }

@@ -28,8 +28,27 @@ async function registerUser(username, password) {
     if (users[username]) throw new Error('이미 존재하는 아이디입니다.');
     users[username] = {
         passwordHash: await hashPassword(password),
-        progress: { stageIndex: 0 }
+        progress: { stageIndex: 0 },
+        // 최초 로그인 시 인트로(스토리 프롤로그) 팝업을 한 번만 보여주기 위한 플래그
+        hasSeenIntro: false
     };
+    setUsers(users);
+}
+
+// 인트로 플래그 조회/저장. 기존 유저는 필드가 undefined 일 수 있는데,
+// 이 경우 "아직 못 봤음"으로 취급해 다음 로그인 시 한 번 보여주고 true 로 마킹한다.
+function hasSeenIntro() {
+    const username = getCurrentUser();
+    if (!username) return true;
+    return getUsers()[username]?.hasSeenIntro === true;
+}
+
+function markIntroSeen() {
+    const username = getCurrentUser();
+    if (!username) return;
+    const users = getUsers();
+    if (!users[username]) return;
+    users[username].hasSeenIntro = true;
     setUsers(users);
 }
 
@@ -316,6 +335,8 @@ const gameQuitBtn = document.getElementById('game-quit-btn');
 const quitConfirmModal = document.getElementById('quit-confirm-modal');
 const quitYesBtn = document.getElementById('quit-yes-btn');
 const quitNoBtn = document.getElementById('quit-no-btn');
+const introModal = document.getElementById('intro-modal');
+const introConfirmBtn = document.getElementById('intro-confirm-btn');
 
 // ==================== 인증 UI ====================
 let authMode = 'login';
@@ -493,6 +514,8 @@ function showLobby() {
     clearModal.classList.add('hidden');
     endingModal.classList.add('hidden');
     if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
+    // intro 모달은 아래에서 조건부로 다시 띄울 수 있으니 일단 내려둠
+    if (introModal) introModal.classList.add('hidden');
     lobbyScreen.classList.remove('hidden');
 
     lobbyUserNameEl.innerText = getCurrentUser() || '';
@@ -509,6 +532,12 @@ function showLobby() {
     // 게임 상태 정리
     boardElement.innerHTML = '';
     board = [];
+
+    // 첫 로그인이라면 프롤로그(인트로) 모달을 한 번만 띄운다.
+    // 플래그는 유저 객체에 저장되므로 재로그인/브라우저 재시작해도 다시 뜨지 않는다.
+    if (!hasSeenIntro() && introModal) {
+        introModal.classList.remove('hidden');
+    }
 }
 
 // 화살표 버튼: 이전/다음 공간으로 뷰 이동 (+ 그 공간의 BGM 으로 전환)
@@ -554,6 +583,7 @@ function exitToAuth() {
     clearModal.classList.add('hidden');
     endingModal.classList.add('hidden');
     if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
+    if (introModal) introModal.classList.add('hidden');
     // 로그아웃/인증 화면 복귀 시 BGM 정지
     stopBgm();
     authScreen.classList.remove('hidden');
@@ -839,6 +869,14 @@ endingExitBtn.addEventListener('click', () => {
     endingModal.classList.add('hidden');
     showLobby();
 });
+
+// 인트로(첫 로그인) 모달 확인: 한 번 본 것으로 기록하고 모달 닫기
+if (introConfirmBtn) {
+    introConfirmBtn.addEventListener('click', () => {
+        markIntroSeen();
+        if (introModal) introModal.classList.add('hidden');
+    });
+}
 
 // 게임 중 "나가기" 버튼: 확인 팝업을 띄운 뒤 예 선택 시에만 로비로 돌아감
 if (gameQuitBtn) {
