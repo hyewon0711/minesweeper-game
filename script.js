@@ -589,24 +589,21 @@ function checkWin() {
         const nextIndex = Math.min(currentStageIndex + 1, 100);
         saveProgress(nextIndex);
 
-        // [예시 적용] 스테이지 2 (currentStageIndex === 1) 를 클리어한 경우:
-        //   팝업 대신 로비로 돌아가 "새로 채워진 가구"가 나타나는 애니메이션을 재생한다.
-        //   nextIndex=2 → computeWorldInfo: worldIndex=1, revealLevel=3
-        //   즉, world 1 의 data-min-stage="3" 요소가 이번에 새로 드러난다.
-        if (currentStageIndex === 1) {
-            pendingRevealWorld = 1;
-            pendingRevealStage = 3;
-            setTimeout(() => {
-                showLobby();
-            }, 500);
-            return;
-        }
+        // 클리어 시 공통 흐름: 팝업 대신 로비로 돌아가, "이번 클리어로 새로
+        // 드러나는 요소"에 등장 애니메이션을 재생한다.
+        //   - 같은 공간 안에서 클리어: 해당 공간의 revealLevel 요소 (가구 하나 추가)
+        //   - 공간 전환 클리어(10·20·30 …): 다음 공간의 data-min-stage="1" (base 전체)
+        const info = computeWorldInfo(nextIndex);
+        pendingRevealWorld = info.worldIndex;
+        pendingRevealStage = info.revealLevel;
 
         setTimeout(() => {
-            if (currentStageIndex + 1 >= 100) {
-                endingModal.classList.remove('hidden');
-            } else {
-                clearModal.classList.remove('hidden');
+            showLobby();
+            // 모든 공간을 다 채웠으면 애니메이션이 끝난 뒤 엔딩 모달 노출
+            if (nextIndex >= 100) {
+                setTimeout(() => {
+                    endingModal.classList.remove('hidden');
+                }, 1700);
             }
         }, 500);
     }
