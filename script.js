@@ -62,6 +62,32 @@ function saveProgress(stageIndex) {
     setUsers(users);
 }
 
+// ==================== 월드(공간) 데이터 ====================
+const WORLD_NAMES = [
+    '아늑한 서재',
+    '유리 온실',
+    '벚꽃 골목',
+    '도시 스카이라인',
+    '숲속 제단',
+    '바다 등대',
+    '겨울 산장',
+    '우주 관측소',
+    '레코드 가게',
+    '하늘 정원'
+];
+const WORLD_NUMERALS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+
+// stageIndex: 0..100 (진행 저장 기준, 100 = 모든 스테이지 완료)
+// 반환: { worldIndex: 1..10, revealLevel: 0..10 } — 해당 공간에서 "해금된" 요소 수준
+function computeWorldInfo(stageIndex) {
+    if (stageIndex >= 100) {
+        return { worldIndex: 10, revealLevel: 10 };
+    }
+    const worldIndex = Math.floor(stageIndex / 10) + 1;
+    const revealLevel = stageIndex % 10;
+    return { worldIndex, revealLevel };
+}
+
 // ==================== 게임 상태 ====================
 let currentStageIndex = 0;
 let ROWS = 5;
@@ -78,6 +104,9 @@ const authScreen = document.getElementById('auth-screen');
 const lobbyScreen = document.getElementById('lobby-screen');
 const lobbyUserNameEl = document.getElementById('lobby-user-name');
 const lobbyLogoutBtn = document.getElementById('lobby-logout-btn');
+const lobbyScene = document.getElementById('lobby-scene');
+const lobbyWorldNameEl = document.getElementById('lobby-world-name');
+const lobbyWorldProgressEl = document.getElementById('lobby-world-progress');
 const stageBtn = document.getElementById('stage-btn');
 const gameContainer = document.getElementById('game-container');
 const userNameEl = document.getElementById('user-name');
@@ -191,8 +220,39 @@ stageBtn.addEventListener('click', () => startStage(loadProgress()));
 
 function refreshStageButton() {
     const idx = loadProgress();
-    const stageNum = idx + 1;
-    stageBtn.innerText = `스테이지 ${stageNum}`;
+    if (idx >= 100) {
+        stageBtn.innerText = '스테이지 100 (재도전)';
+    } else {
+        const stageNum = idx + 1;
+        stageBtn.innerText = `스테이지 ${stageNum}`;
+    }
+}
+
+function renderLobbyScene(worldIndex, revealLevel) {
+    if (!lobbyScene) return;
+    lobbyScene.innerHTML = '';
+    const tpl = document.getElementById('tpl-' + worldIndex);
+    if (!tpl) return;
+    const svgSource = tpl.content.querySelector('svg');
+    if (!svgSource) return;
+    const svg = svgSource.cloneNode(true);
+    svg.querySelectorAll('[data-min-stage]').forEach(el => {
+        const minStage = Number(el.dataset.minStage);
+        if (minStage > revealLevel) {
+            el.setAttribute('visibility', 'hidden');
+        }
+    });
+    lobbyScene.appendChild(svg);
+}
+
+function updateLobbyWorldView() {
+    const progress = loadProgress();
+    const { worldIndex, revealLevel } = computeWorldInfo(progress);
+    const numeral = WORLD_NUMERALS[worldIndex - 1] || '';
+    const name = WORLD_NAMES[worldIndex - 1] || '';
+    if (lobbyWorldNameEl) lobbyWorldNameEl.innerText = `공간 ${numeral} ${name}`;
+    if (lobbyWorldProgressEl) lobbyWorldProgressEl.innerText = `${revealLevel} / 10`;
+    renderLobbyScene(worldIndex, revealLevel);
 }
 
 function showLobby() {
@@ -205,6 +265,7 @@ function showLobby() {
 
     lobbyUserNameEl.innerText = getCurrentUser() || '';
     refreshStageButton();
+    updateLobbyWorldView();
 
     // 게임 상태 정리
     boardElement.innerHTML = '';
@@ -216,7 +277,8 @@ function startStage(stageIndex) {
     lobbyScreen.classList.add('hidden');
     gameContainer.classList.remove('hidden');
     userNameEl.innerText = getCurrentUser() || '';
-    currentStageIndex = stageIndex;
+    // 진행도는 100(완료)까지 저장될 수 있으므로 실제 플레이는 최대 99(스테이지 100)로 제한
+    currentStageIndex = Math.min(stageIndex, 99);
     initGame();
 }
 
@@ -434,8 +496,8 @@ function checkWin() {
             }
         }
 
-        // 다음 스테이지를 계정에 저장 (100 이상은 99로 캡)
-        const nextIndex = Math.min(currentStageIndex + 1, 99);
+        // 다음 스테이지 진행도 저장 (최대 100 = 모든 스테이지 완료 상태)
+        const nextIndex = Math.min(currentStageIndex + 1, 100);
         saveProgress(nextIndex);
 
         setTimeout(() => {
