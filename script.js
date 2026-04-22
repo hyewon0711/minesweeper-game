@@ -478,6 +478,20 @@ function calculateNeighbors() {
     }
 }
 
+// 안전 칸 클릭 시 상단 이모티콘이 입을 벌려 웃었다가 원래 웃음으로 돌아오는 효과.
+// 연속 클릭 대비해 타이머를 리셋하도록 구현 — 마지막 클릭 후 ~350ms 뒤에 복귀.
+let resetBtnSmileTimer = null;
+function flashOpenSmile() {
+    if (gameOver) return;
+    resetBtn.innerText = '😃';
+    if (resetBtnSmileTimer) clearTimeout(resetBtnSmileTimer);
+    resetBtnSmileTimer = setTimeout(() => {
+        resetBtnSmileTimer = null;
+        // 승리(😎)·패배(😵) 상태를 덮어쓰지 않도록 가드
+        if (!gameOver) resetBtn.innerText = '😊';
+    }, 350);
+}
+
 function handleCellClick(e) {
     if (gameOver) return;
     const r = parseInt(e.target.dataset.r);
@@ -500,6 +514,9 @@ function handleCellClick(e) {
         }, 500);
         return;
     }
+
+    // 안전 칸이 성공적으로 열리는 순간: 짧게 입을 벌려 웃는 반응
+    flashOpenSmile();
 
     revealCell(r, c);
     checkWin();
