@@ -465,33 +465,98 @@ h1 {
     transform: scale(0.9);
 }
 
-/* 우클릭 → 깃발 안내 (헤더 오른쪽) */
-.hint-box {
+/* 도움말 버튼 + 말풍선 (헤더 오른쪽) */
+.help-wrap {
+    position: relative;
+}
+
+.help-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--cell-bg);
+    color: white;
+    border: none;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    font-size: 1rem;
-    padding: 0 0.2rem;
 }
+.help-btn:hover { background-color: var(--cell-hover); }
+.help-btn:active { transform: scale(0.93); }
+.help-btn.active { background-color: var(--accent-sage); }
 
-.hint-mouse {
-    width: 20px;
-    height: 26px;
-    flex-shrink: 0;
+.help-bubble {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    background: var(--container-bg);
+    border: 1.5px solid var(--cell-bg);
+    border-radius: 0.7rem;
+    padding: 0.9rem 1.1rem;
+    width: 220px;
+    text-align: left;
+    font-size: 0.88rem;
+    box-shadow: 0 6px 24px rgba(26, 45, 62, 0.18);
+    z-index: 100;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.18s, transform 0.18s;
+}
+.help-bubble::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 11px;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid var(--cell-bg);
+}
+.help-bubble::after {
+    content: '';
+    position: absolute;
+    top: -5.5px;
+    right: 12px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--container-bg);
+}
+.help-bubble.hidden {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+}
+.help-bubble strong {
     display: block;
+    font-size: 0.92rem;
+    color: var(--text-color);
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--cell-empty);
 }
-
-.hint-arrow {
+.help-bubble ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+}
+.help-bubble li {
     color: var(--muted-text);
-    font-weight: 500;
-    font-size: 1rem;
-    line-height: 1;
+    font-size: 0.86rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    line-height: 1.4;
 }
-
-.hint-flag {
-    font-size: 1.15rem;
-    line-height: 1;
+.help-bubble li .icon {
+    flex-shrink: 0;
+    width: 1.2em;
+    text-align: center;
 }
 
 .board {

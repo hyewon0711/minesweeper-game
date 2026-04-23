@@ -638,6 +638,8 @@ function initGame() {
 
             cellElement.addEventListener('click', handleCellClick);
             cellElement.addEventListener('contextmenu', handleRightClick);
+            cellElement.addEventListener('mousedown', handleChordDown);
+            cellElement.addEventListener('mouseup', handleChordUp);
 
             boardElement.appendChild(cellElement);
             row.push({
@@ -698,6 +700,66 @@ function flashOpenSmile() {
         // 승리(😎)·패배(😵) 상태를 덮어쓰지 않도록 가드
         if (!gameOver) resetBtn.innerText = '😊';
     }, 350);
+}
+
+// 좌+우 동시 클릭(chord) 구현: 버튼 상태를 추적해 양쪽이 모두 눌렸을 때 실행
+const chordPressed = new Map(); // element → Set of pressed buttons
+
+function handleChordDown(e) {
+    if (gameOver) return;
+    const el = e.currentTarget;
+    if (!chordPressed.has(el)) chordPressed.set(el, new Set());
+    chordPressed.get(el).add(e.button);
+
+    if (chordPressed.get(el).has(0) && chordPressed.get(el).has(2)) {
+        const r = parseInt(el.dataset.r);
+        const c = parseInt(el.dataset.c);
+        chordReveal(r, c);
+    }
+}
+
+function handleChordUp(e) {
+    const el = e.currentTarget;
+    if (chordPressed.has(el)) chordPressed.get(el).delete(e.button);
+}
+
+function chordReveal(r, c) {
+    const cell = board[r][c];
+    if (!cell.isRevealed || cell.neighborMines === 0) return;
+
+    // 주변 깃발 수 세기
+    let flagCount = 0;
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc].isFlagged) flagCount++;
+        }
+    }
+    if (flagCount !== cell.neighborMines) return;
+
+    // 깃발 수가 일치하면 주변 미열린 칸 자동 오픈
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = r + dr, nc = c + dc;
+            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+            const neighbor = board[nr][nc];
+            if (neighbor.isRevealed || neighbor.isFlagged) continue;
+            if (neighbor.isMine) {
+                revealAllMines();
+                gameOver = true;
+                resetBtn.innerText = '😵';
+                playSfx('mine');
+                setTimeout(() => modal.classList.remove('hidden'), 500);
+                return;
+            }
+            flashOpenSmile();
+            playSfx('safe');
+            revealCell(nr, nc);
+        }
+    }
+    checkWin();
 }
 
 function handleCellClick(e) {
@@ -843,6 +905,23 @@ function checkWin() {
 
 // ==================== 이벤트 바인딩 ====================
 resetBtn.addEventListener('click', initGame);
+
+// 도움말 버튼: 클릭으로 말풍선 토글, 바깥 클릭 시 자동 닫기
+const helpBtn = document.getElementById('help-btn');
+const helpBubble = document.getElementById('help-bubble');
+if (helpBtn && helpBubble) {
+    helpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        helpBubble.classList.toggle('hidden');
+        helpBtn.classList.toggle('active');
+    });
+    document.addEventListener('click', (e) => {
+        if (!helpBtn.contains(e.target) && !helpBubble.contains(e.target)) {
+            helpBubble.classList.add('hidden');
+            helpBtn.classList.remove('active');
+        }
+    });
+}
 
 retryBtn.addEventListener('click', () => {
     modal.classList.add('hidden');
