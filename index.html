@@ -71,20 +71,7 @@
         <div class="header">
             <div class="status-box">지뢰: <span id="mine-count">3</span></div>
             <button id="reset-btn" class="reset-btn">😊</button>
-            <div class="help-wrap">
-                <button id="help-btn" class="help-btn" type="button" aria-label="조작법 보기">?</button>
-                <div id="help-bubble" class="help-bubble hidden" role="tooltip">
-                    <strong>🎮 조작법</strong>
-                    <ul>
-                        <li><span class="icon">🖱</span> 좌클릭 → 칸 열기</li>
-                        <li><span class="icon">🖱</span> 우클릭 → 🚩 깃발 꽂기 / 빼기</li>
-                        <li><span class="icon">🖱</span> 좌+우 동시 클릭 → 주변 자동 열기</li>
-                        <li><span class="icon">🚩</span> 깃발로 지뢰 위치를 표시하세요</li>
-                        <li><span class="icon">🔢</span> 숫자 = 주변 지뢰 개수</li>
-                        <li><span class="icon">⬜</span> 빈 칸은 자동으로 펼쳐져요</li>
-                    </ul>
-                </div>
-            </div>
+            <button id="help-btn" class="help-btn" type="button" aria-label="조작법 보기">?</button>
         </div>
         <div id="board" class="board"></div>
     </div>
@@ -1297,6 +1284,24 @@
         </g>
     </svg>
     </template>
+
+    <!-- 조작법 도움말 모달 -->
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-content help-modal-content">
+            <h2 class="help-title">🎮 조작법</h2>
+            <ul class="help-list">
+                <li><span class="icon">🖱</span> 좌클릭 → 칸 열기</li>
+                <li><span class="icon">🖱</span> 우클릭 → 🚩 깃발 꽂기 / 빼기</li>
+                <li><span class="icon">🖱</span> 좌+우 동시 클릭 → 주변 자동 열기</li>
+                <li><span class="icon">🚩</span> 깃발로 지뢰 위치를 표시하세요</li>
+                <li><span class="icon">🔢</span> 숫자 = 주변 지뢰 개수</li>
+                <li><span class="icon">⬜</span> 빈 칸은 자동으로 펼쳐져요</li>
+            </ul>
+            <div class="modal-buttons">
+                <button id="help-close-btn" type="button">닫기</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

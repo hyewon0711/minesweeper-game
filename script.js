@@ -906,18 +906,22 @@ function checkWin() {
 // ==================== 이벤트 바인딩 ====================
 resetBtn.addEventListener('click', initGame);
 
-// 도움말 버튼: 클릭으로 말풍선 토글, 바깥 클릭 시 자동 닫기
+// 도움말 버튼: 조작법 모달 열기/닫기
 const helpBtn = document.getElementById('help-btn');
-const helpBubble = document.getElementById('help-bubble');
-if (helpBtn && helpBubble) {
-    helpBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        helpBubble.classList.toggle('hidden');
-        helpBtn.classList.toggle('active');
+const helpModal = document.getElementById('help-modal');
+const helpCloseBtn = document.getElementById('help-close-btn');
+if (helpBtn && helpModal && helpCloseBtn) {
+    helpBtn.addEventListener('click', () => {
+        helpModal.classList.remove('hidden');
+        helpBtn.classList.add('active');
     });
-    document.addEventListener('click', (e) => {
-        if (!helpBtn.contains(e.target) && !helpBubble.contains(e.target)) {
-            helpBubble.classList.add('hidden');
+    helpCloseBtn.addEventListener('click', () => {
+        helpModal.classList.add('hidden');
+        helpBtn.classList.remove('active');
+    });
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+            helpModal.classList.add('hidden');
             helpBtn.classList.remove('active');
         }
     });
