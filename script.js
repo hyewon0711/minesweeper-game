@@ -81,6 +81,101 @@ function saveProgress(stageIndex) {
     setUsers(users);
 }
 
+// ==================== 랭킹: 기록 / 명예의 전당 ====================
+const PIONEERS_KEY = 'minesweeper_pioneers';
+const MAX_PIONEERS = 100;
+
+function getUserRecords(username) {
+    if (!username) return {};
+    return getUsers()[username]?.records || {};
+}
+
+// 스테이지 기록 저장. 새 기록이 기존보다 빠를 때만 갱신.
+// returns: { updated: boolean, previousMs: number|null, newMs: number }
+function setStageRecord(username, stageIdx, timeMs) {
+    if (!username) return { updated: false, previousMs: null, newMs: timeMs };
+    const users = getUsers();
+    if (!users[username]) return { updated: false, previousMs: null, newMs: timeMs };
+    if (!users[username].records) users[username].records = {};
+    const prev = users[username].records[stageIdx];
+    const previousMs = prev ? prev.bestMs : null;
+    if (previousMs !== null && previousMs <= timeMs) {
+        return { updated: false, previousMs, newMs: timeMs };
+    }
+    users[username].records[stageIdx] = { bestMs: timeMs, clearedAt: Date.now() };
+    setUsers(users);
+    return { updated: true, previousMs, newMs: timeMs };
+}
+
+function getUserTotalMs(username) {
+    const records = getUserRecords(username);
+    let total = 0;
+    for (let i = 0; i < 100; i++) {
+        if (!records[i]) return null;
+        total += records[i].bestMs;
+    }
+    return total;
+}
+
+function getPioneers() {
+    try { return JSON.parse(localStorage.getItem(PIONEERS_KEY)) || []; }
+    catch { return []; }
+}
+function savePioneers(arr) {
+    localStorage.setItem(PIONEERS_KEY, JSON.stringify(arr));
+}
+
+// 100 스테이지 완주 시 명예의 전당 등록/갱신 시도.
+// 미등록이면 선착순 100명 안에 들 때 추가, 이미 등록돼 있으면 총 시간이 더 빠를 때만 갱신.
+function tryRegisterPioneer(username) {
+    const totalMs = getUserTotalMs(username);
+    if (totalMs === null) return;
+    const pioneers = getPioneers();
+    const existingIdx = pioneers.findIndex(p => p.username === username);
+    if (existingIdx !== -1) {
+        if (totalMs < pioneers[existingIdx].totalMs) {
+            pioneers[existingIdx].totalMs = totalMs;
+            pioneers[existingIdx].updatedAt = Date.now();
+        }
+    } else {
+        if (pioneers.length >= MAX_PIONEERS) return;
+        pioneers.push({
+            username,
+            completedAt: Date.now(),
+            totalMs
+        });
+    }
+    pioneers.sort((a, b) => a.totalMs - b.totalMs);
+    savePioneers(pioneers);
+}
+
+// 스테이지별 1위 계산 (모든 로컬 유저 대상)
+// returns: Array<{ stageIdx, username, bestMs } | null>  length 100
+function computeStageLeaders() {
+    const users = getUsers();
+    const leaders = new Array(100).fill(null);
+    for (const username in users) {
+        const records = users[username]?.records || {};
+        for (let i = 0; i < 100; i++) {
+            const rec = records[i];
+            if (!rec) continue;
+            if (!leaders[i] || rec.bestMs < leaders[i].bestMs) {
+                leaders[i] = { stageIdx: i, username, bestMs: rec.bestMs };
+            }
+        }
+    }
+    return leaders;
+}
+
+function formatMs(ms) {
+    if (ms == null || isNaN(ms)) return '--:--.-';
+    const totalSec = ms / 1000;
+    const min = Math.floor(totalSec / 60);
+    const sec = Math.floor(totalSec % 60);
+    const tenths = Math.floor((ms % 1000) / 100);
+    return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenths}`;
+}
+
 // ==================== 월드(공간) 데이터 ====================
 const WORLD_NAMES = [
     '아늑한 서재',
@@ -126,6 +221,55 @@ let board = [];
 let gameOver = false;
 let minesLeft = MINES;
 let firstClick = true;
+
+// 타이머: 첫 클릭 시점부터 시작, 클리어/지뢰 시점에 정지
+let gameStartTime = null;
+let timerInterval = null;
+let lastStageMs = 0;
+
+// 재도전 모드
+//   null       : 정상 진행
+//   'single'   : 단일 스테이지 재도전 (한 판 후 로비)
+//   'fullrun'  : 풀런 (스테이지 1→100 연속, 완주 시 총 시간 기록)
+let retryMode = null;
+let fullrunStartStage = 0;
+let fullrunTotalMs = 0;   // 지금까지 누적된 풀런 시간
+
+function startTimer() {
+    gameStartTime = performance.now();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimerDisplay, 100);
+    updateTimerDisplay();
+}
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (gameStartTime !== null) {
+        lastStageMs = performance.now() - gameStartTime;
+        gameStartTime = null;
+    }
+    updateTimerDisplay();
+    return lastStageMs;
+}
+function resetTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    gameStartTime = null;
+    lastStageMs = 0;
+    updateTimerDisplay();
+}
+function updateTimerDisplay() {
+    const el = document.getElementById('timer-value');
+    if (!el) return;
+    const ms = gameStartTime !== null
+        ? (performance.now() - gameStartTime)
+        : lastStageMs;
+    el.textContent = formatMs(ms);
+}
 
 // ==================== 오디오 매니저 ====================
 // - BGM: 게임 전체에서 한 곡(lofi-study)만 계속 반복 재생한다.
@@ -516,6 +660,14 @@ function showLobby() {
     if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
     // intro 모달은 아래에서 조건부로 다시 띄울 수 있으니 일단 내려둠
     if (introModal) introModal.classList.add('hidden');
+    // 랭킹 관련 모달도 함께 닫기 (재도전 모드도 초기화는 호출자 책임)
+    const _rm = document.getElementById('ranking-modal');
+    const _nrm = document.getElementById('new-record-modal');
+    const _frcm = document.getElementById('fullrun-confirm-modal');
+    const _frrm = document.getElementById('fullrun-result-modal');
+    if (_rm) _rm.classList.add('hidden');
+    // new-record 및 fullrun-result 는 showLobby 이후에 다시 띄울 수 있으니 여기서는 건드리지 않음
+    if (_frcm) _frcm.classList.add('hidden');
     lobbyScreen.classList.remove('hidden');
 
     lobbyUserNameEl.innerText = getCurrentUser() || '';
@@ -584,6 +736,10 @@ function exitToAuth() {
     endingModal.classList.add('hidden');
     if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
     if (introModal) introModal.classList.add('hidden');
+    ['ranking-modal','new-record-modal','fullrun-confirm-modal','fullrun-result-modal']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+    retryMode = null;
+    fullrunTotalMs = 0;
     // 로그아웃/인증 화면 복귀 시 BGM 정지
     stopBgm();
     authScreen.classList.remove('hidden');
@@ -624,6 +780,7 @@ function initGame() {
     firstClick = true;
     mineCountElement.innerText = minesLeft;
     resetBtn.innerText = '😊';
+    resetTimer();
 
     boardElement.style.gridTemplateColumns = `repeat(${COLS}, 40px)`;
     boardElement.style.gridTemplateRows = `repeat(${ROWS}, 40px)`;
@@ -773,11 +930,13 @@ function handleCellClick(e) {
     if (firstClick) {
         firstClick = false;
         placeMines(r, c);
+        startTimer();
     }
 
     if (cell.isMine) {
         revealAllMines();
         gameOver = true;
+        stopTimer();
         resetBtn.innerText = '😵';
         playSfx('mine');
         setTimeout(() => {
@@ -863,6 +1022,7 @@ function checkWin() {
 
     if (revealedCount === (ROWS * COLS) - MINES) {
         gameOver = true;
+        const stageMs = stopTimer();
         resetBtn.innerText = '😎';
         mineCountElement.innerText = '0';
         playSfx('clear');
@@ -876,30 +1036,65 @@ function checkWin() {
             }
         }
 
-        // 다음 스테이지 진행도 저장 (최대 100 = 모든 스테이지 완료 상태)
-        const nextIndex = Math.min(currentStageIndex + 1, 100);
-        saveProgress(nextIndex);
+        // 스테이지 베스트 타임 갱신 시도 (정상/단일재도전/풀런 공통)
+        const username = getCurrentUser();
+        const recResult = setStageRecord(username, currentStageIndex, stageMs);
 
-        // 클리어 시 공통 흐름: 팝업 대신 로비로 돌아가, "이번 클리어로 새로
-        // 드러나는 요소"에 등장 애니메이션을 재생한다.
-        //   - 같은 공간 안에서 클리어: 해당 공간의 revealLevel 요소 (가구 하나 추가)
-        //   - 공간 전환 클리어(10·20·30 …): 다음 공간의 data-min-stage="1" (base 전체)
-        const info = computeWorldInfo(nextIndex);
-        pendingRevealWorld = info.worldIndex;
-        pendingRevealStage = info.revealLevel;
-
-        setTimeout(() => {
-            showLobby();
-            // 모든 공간을 다 채웠으면 애니메이션이 끝난 뒤 엔딩 모달 노출
+        // 재도전 모드는 진행도 저장 X. 정상 모드만 다음 스테이지로 진행도 저장.
+        if (retryMode === null) {
+            const nextIndex = Math.min(currentStageIndex + 1, 100);
+            saveProgress(nextIndex);
             if (nextIndex >= 100) {
-                setTimeout(() => {
-                    if (endingUserNameEl) {
-                        endingUserNameEl.innerText = getCurrentUser() || '';
-                    }
-                    endingModal.classList.remove('hidden');
-                }, 1700);
+                tryRegisterPioneer(username);
             }
-        }, 500);
+
+            const info = computeWorldInfo(nextIndex);
+            pendingRevealWorld = info.worldIndex;
+            pendingRevealStage = info.revealLevel;
+
+            setTimeout(() => {
+                showLobby();
+                if (recResult.updated && recResult.previousMs !== null) {
+                    showNewRecordModal(currentStageIndex, recResult.previousMs, recResult.newMs);
+                }
+                // 모든 공간을 다 채웠으면 애니메이션이 끝난 뒤 엔딩 모달 노출
+                if (nextIndex >= 100) {
+                    setTimeout(() => {
+                        if (endingUserNameEl) {
+                            endingUserNameEl.innerText = getCurrentUser() || '';
+                        }
+                        endingModal.classList.remove('hidden');
+                    }, 1700);
+                }
+            }, 500);
+        } else if (retryMode === 'single') {
+            // 단일 스테이지 재도전: 기록만 갱신하고 로비로 복귀
+            setTimeout(() => {
+                const endedRetry = retryMode;
+                retryMode = null;
+                showLobby();
+                if (recResult.updated && recResult.previousMs !== null) {
+                    showNewRecordModal(currentStageIndex, recResult.previousMs, recResult.newMs);
+                }
+            }, 500);
+        } else if (retryMode === 'fullrun') {
+            // 풀런: 다음 스테이지로 연속 진행
+            fullrunTotalMs += stageMs;
+            if (currentStageIndex < 99) {
+                setTimeout(() => {
+                    startStage(currentStageIndex + 1);
+                }, 800);
+            } else {
+                // 풀런 완주
+                tryRegisterPioneer(username);
+                const finalTotal = fullrunTotalMs;
+                setTimeout(() => {
+                    retryMode = null;
+                    showLobby();
+                    showFullrunResultModal(finalTotal);
+                }, 500);
+            }
+        }
     }
 }
 
@@ -970,6 +1165,9 @@ if (gameQuitBtn) {
 if (quitYesBtn) {
     quitYesBtn.addEventListener('click', () => {
         if (quitConfirmModal) quitConfirmModal.classList.add('hidden');
+        // 재도전(단일/풀런) 중 나가기는 재도전을 중단하는 것으로 간주
+        retryMode = null;
+        fullrunTotalMs = 0;
         showLobby();
     });
 }
@@ -1012,6 +1210,226 @@ if (localStorage.getItem(VOLUME_KEY) === null) saveVolume(DEFAULT_VOLUME);
 if (localStorage.getItem(MUTED_KEY) === null) saveMuted(false);
 applyVolumeToAllAudio();
 syncVolumeUI();
+
+// ==================== 랭킹 모달 컨트롤러 ====================
+const rankingModal = document.getElementById('ranking-modal');
+const rankingBtn = document.getElementById('ranking-btn');
+const lobbyRankingBtn = document.getElementById('lobby-ranking-btn');
+const rankingCloseBtn = document.getElementById('ranking-close-btn');
+const rankingTheadEl = document.getElementById('ranking-thead');
+const rankingTbodyEl = document.getElementById('ranking-tbody');
+const rankingSubtitleEl = document.getElementById('ranking-subtitle');
+const rankTabs = document.querySelectorAll('.rank-tab');
+
+const newRecordModal = document.getElementById('new-record-modal');
+const newRecordStageEl = document.getElementById('new-record-stage');
+const newRecordPrevEl = document.getElementById('new-record-prev');
+const newRecordNewEl = document.getElementById('new-record-new');
+const newRecordCloseBtn = document.getElementById('new-record-close-btn');
+
+const fullrunConfirmModal = document.getElementById('fullrun-confirm-modal');
+const fullrunYesBtn = document.getElementById('fullrun-yes-btn');
+const fullrunNoBtn = document.getElementById('fullrun-no-btn');
+const fullrunResultModal = document.getElementById('fullrun-result-modal');
+const fullrunTotalTimeEl = document.getElementById('fullrun-total-time');
+const fullrunResultCloseBtn = document.getElementById('fullrun-result-close-btn');
+
+let currentRankTab = 'mine';
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function openRanking(initialTab) {
+    if (!rankingModal) return;
+    currentRankTab = initialTab || 'mine';
+    rankTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === currentRankTab));
+    renderRankingTab(currentRankTab);
+    rankingModal.classList.remove('hidden');
+}
+
+function closeRanking() {
+    if (rankingModal) rankingModal.classList.add('hidden');
+}
+
+function renderRankingTab(tab) {
+    if (!rankingTheadEl || !rankingTbodyEl) return;
+    currentRankTab = tab;
+    rankTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+
+    const username = getCurrentUser();
+    const progress = loadProgress();
+    const records = getUserRecords(username);
+
+    if (tab === 'mine') {
+        if (rankingSubtitleEl) rankingSubtitleEl.innerText = '스테이지별 내 최고 기록';
+        rankingTheadEl.innerHTML = `
+            <tr>
+                <th style="width:25%">스테이지</th>
+                <th>최고 기록</th>
+                <th style="width:20%">재도전</th>
+            </tr>`;
+        let html = '';
+        for (let i = 0; i < 100; i++) {
+            const rec = records[i];
+            const best = rec ? formatMs(rec.bestMs) : '--:--.-';
+            const cleared = !!rec;
+            const retryCell = cleared
+                ? `<button class="retry-btn" data-retry-stage="${i}" aria-label="재도전">▶</button>`
+                : `<button class="retry-btn locked" disabled aria-label="잠김">🔒</button>`;
+            html += `<tr><td>${i + 1}</td><td>${best}</td><td>${retryCell}</td></tr>`;
+        }
+        rankingTbodyEl.innerHTML = html;
+    } else if (tab === 'top') {
+        if (rankingSubtitleEl) rankingSubtitleEl.innerText = '스테이지별 최단 기록 1위';
+        rankingTheadEl.innerHTML = `
+            <tr>
+                <th style="width:22%">스테이지</th>
+                <th>1위</th>
+                <th>기록</th>
+                <th style="width:20%">재도전</th>
+            </tr>`;
+        const leaders = computeStageLeaders();
+        let html = '';
+        for (let i = 0; i < 100; i++) {
+            const lead = leaders[i];
+            const name = lead ? escapeHtml(lead.username) : '-';
+            const time = lead ? formatMs(lead.bestMs) : '--:--.-';
+            const isMe = lead && lead.username === username;
+            const unlocked = i <= progress;
+            let retryCell;
+            if (unlocked) {
+                retryCell = `<button class="retry-btn" data-retry-stage="${i}" aria-label="재도전">▶</button>`;
+            } else {
+                retryCell = `<button class="retry-btn locked" disabled aria-label="잠김">🔒</button>`;
+            }
+            html += `<tr${isMe ? ' class="me"' : ''}><td>${i + 1}</td><td>${name}</td><td>${time}</td><td>${retryCell}</td></tr>`;
+        }
+        rankingTbodyEl.innerHTML = html;
+    } else if (tab === 'fame') {
+        if (rankingSubtitleEl) rankingSubtitleEl.innerText = '100 스테이지 완주 명예의 전당 (선착순 100명)';
+        rankingTheadEl.innerHTML = `
+            <tr>
+                <th style="width:15%">순위</th>
+                <th>유저</th>
+                <th>총 시간</th>
+                <th style="width:22%">재도전</th>
+            </tr>`;
+        const pioneers = getPioneers();
+        if (!pioneers.length) {
+            rankingTbodyEl.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--muted-text); padding: 1.2rem;">아직 완주자가 없습니다.</td></tr>`;
+        } else {
+            let html = '';
+            pioneers.forEach((p, idx) => {
+                const isMe = p.username === username;
+                const rankIcon = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1);
+                // 본인 행에만 풀런 재도전 버튼 노출
+                const retryCell = isMe
+                    ? `<button class="retry-btn" data-fullrun="1" aria-label="풀런 재도전">▶</button>`
+                    : '';
+                html += `<tr${isMe ? ' class="me"' : ''}><td>${rankIcon}</td><td>${escapeHtml(p.username)}</td><td>${formatMs(p.totalMs)}</td><td>${retryCell}</td></tr>`;
+            });
+            rankingTbodyEl.innerHTML = html;
+        }
+    }
+}
+
+function showNewRecordModal(stageIdx, prevMs, newMs) {
+    if (!newRecordModal) return;
+    if (newRecordStageEl) newRecordStageEl.innerText = String(stageIdx + 1);
+    if (newRecordPrevEl) newRecordPrevEl.innerText = formatMs(prevMs);
+    if (newRecordNewEl) newRecordNewEl.innerText = formatMs(newMs);
+    newRecordModal.classList.remove('hidden');
+}
+
+function showFullrunResultModal(totalMs) {
+    if (!fullrunResultModal) return;
+    if (fullrunTotalTimeEl) fullrunTotalTimeEl.innerText = formatMs(totalMs);
+    fullrunResultModal.classList.remove('hidden');
+}
+
+function startSingleRetry(stageIdx) {
+    retryMode = 'single';
+    fullrunTotalMs = 0;
+    closeRanking();
+    startStage(stageIdx);
+}
+
+function startFullRun() {
+    retryMode = 'fullrun';
+    fullrunStartStage = 0;
+    fullrunTotalMs = 0;
+    closeRanking();
+    if (fullrunConfirmModal) fullrunConfirmModal.classList.add('hidden');
+    startStage(0);
+}
+
+// ==================== 랭킹 이벤트 바인딩 ====================
+if (rankingBtn) rankingBtn.addEventListener('click', () => openRanking('mine'));
+if (lobbyRankingBtn) lobbyRankingBtn.addEventListener('click', () => openRanking('mine'));
+if (rankingCloseBtn) rankingCloseBtn.addEventListener('click', closeRanking);
+if (rankingModal) {
+    rankingModal.addEventListener('click', (e) => {
+        if (e.target === rankingModal) closeRanking();
+    });
+}
+rankTabs.forEach(t => {
+    t.addEventListener('click', () => renderRankingTab(t.dataset.tab));
+});
+
+// 표 내의 재도전 버튼 위임 처리
+if (rankingTbodyEl) {
+    rankingTbodyEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.disabled) return;
+        if (btn.dataset.fullrun === '1') {
+            // 풀런 확인 모달
+            closeRanking();
+            if (fullrunConfirmModal) fullrunConfirmModal.classList.remove('hidden');
+            return;
+        }
+        const stageIdx = btn.dataset.retryStage;
+        if (stageIdx !== undefined) {
+            startSingleRetry(parseInt(stageIdx, 10));
+        }
+    });
+}
+
+if (newRecordCloseBtn) {
+    newRecordCloseBtn.addEventListener('click', () => {
+        if (newRecordModal) newRecordModal.classList.add('hidden');
+    });
+}
+if (newRecordModal) {
+    newRecordModal.addEventListener('click', (e) => {
+        if (e.target === newRecordModal) newRecordModal.classList.add('hidden');
+    });
+}
+
+if (fullrunYesBtn) fullrunYesBtn.addEventListener('click', () => startFullRun());
+if (fullrunNoBtn) {
+    fullrunNoBtn.addEventListener('click', () => {
+        if (fullrunConfirmModal) fullrunConfirmModal.classList.add('hidden');
+    });
+}
+if (fullrunConfirmModal) {
+    fullrunConfirmModal.addEventListener('click', (e) => {
+        if (e.target === fullrunConfirmModal) fullrunConfirmModal.classList.add('hidden');
+    });
+}
+if (fullrunResultCloseBtn) {
+    fullrunResultCloseBtn.addEventListener('click', () => {
+        if (fullrunResultModal) fullrunResultModal.classList.add('hidden');
+    });
+}
+if (fullrunResultModal) {
+    fullrunResultModal.addEventListener('click', (e) => {
+        if (e.target === fullrunResultModal) fullrunResultModal.classList.add('hidden');
+    });
+}
 
 // ==================== 부트스트랩 ====================
 if (getCurrentUser()) {

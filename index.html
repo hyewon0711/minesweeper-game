@@ -51,6 +51,7 @@
         </div>
         <div class="stage-select">
             <button id="stage-btn" class="stage-btn" type="button">스테이지 1</button>
+            <button id="lobby-ranking-btn" class="rank-btn" type="button">🏆 랭킹</button>
         </div>
     </div>
 
@@ -69,9 +70,15 @@
         </div>
         <h1 id="game-title">지뢰찾기 - 스테이지 1</h1>
         <div class="header">
-            <div class="status-box">지뢰: <span id="mine-count">3</span></div>
+            <div class="status-box status-box-stacked">
+                <div class="status-mine">💣 <span id="mine-count">3</span></div>
+                <div class="status-timer">⏱ <span id="timer-value">00:00.0</span></div>
+            </div>
             <button id="reset-btn" class="reset-btn">😊</button>
-            <button id="help-btn" class="help-btn" type="button" aria-label="조작법 보기">?</button>
+            <div class="header-actions">
+                <button id="ranking-btn" class="rank-icon-btn" type="button" aria-label="랭킹">🏆</button>
+                <button id="help-btn" class="help-btn" type="button" aria-label="조작법 보기">?</button>
+            </div>
         </div>
         <div id="board" class="board"></div>
     </div>
@@ -1284,6 +1291,72 @@
         </g>
     </svg>
     </template>
+
+    <!-- 랭킹 모달 -->
+    <div id="ranking-modal" class="modal hidden">
+        <div class="modal-content ranking-modal-content">
+            <h2 class="ranking-title">🏆 랭킹</h2>
+            <div class="ranking-tabs">
+                <button class="rank-tab active" data-tab="mine" type="button">내 기록</button>
+                <button class="rank-tab" data-tab="top" type="button">스테이지 1위</button>
+                <button class="rank-tab" data-tab="fame" type="button">명예의 전당</button>
+            </div>
+            <div id="ranking-subtitle" class="ranking-subtitle"></div>
+            <div class="rank-scroll">
+                <table class="rank-table">
+                    <thead id="ranking-thead"></thead>
+                    <tbody id="ranking-tbody"></tbody>
+                </table>
+            </div>
+            <div class="modal-buttons">
+                <button id="ranking-close-btn" type="button">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 신기록 달성 팝업 -->
+    <div id="new-record-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="new-record-title">🎉 신기록 달성!</h2>
+            <p class="new-record-detail">
+                스테이지 <span id="new-record-stage">1</span>
+            </p>
+            <p class="new-record-times">
+                <span id="new-record-prev" class="prev-time">00:00.0</span>
+                →
+                <span id="new-record-new" class="new-time">00:00.0</span>
+            </p>
+            <div class="modal-buttons">
+                <button id="new-record-close-btn" type="button">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 풀런 시작 확인 팝업 -->
+    <div id="fullrun-confirm-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="quit-title">🏃 풀런 재도전</h2>
+            <p>스테이지 1부터 100까지 이어서 플레이합니다.<br>현재 진행도에는 영향을 주지 않으며, 총 시간이 기존보다 빠를 때만 갱신됩니다.</p>
+            <div class="modal-buttons">
+                <button id="fullrun-yes-btn" type="button">시작</button>
+                <button id="fullrun-no-btn" type="button">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 풀런 완주 결과 팝업 -->
+    <div id="fullrun-result-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="new-record-title">🏆 풀런 완주!</h2>
+            <p id="fullrun-result-detail">총 소요 시간</p>
+            <p class="new-record-times">
+                <span id="fullrun-total-time" class="new-time">00:00.0</span>
+            </p>
+            <div class="modal-buttons">
+                <button id="fullrun-result-close-btn" type="button">확인</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 조작법 도움말 모달 -->
     <div id="help-modal" class="modal hidden">

@@ -465,6 +465,244 @@ h1 {
     transform: scale(0.9);
 }
 
+/* 헤더 상태 박스 (지뢰 + 타이머 2줄) */
+.status-box-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 78px;
+    text-align: left;
+}
+.status-mine {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+}
+.status-timer {
+    font-size: 0.82rem;
+    color: var(--muted-text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+/* 헤더 우측 버튼 그룹 (🏆 + ?) */
+.header-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+/* 랭킹 아이콘 버튼 (게임 헤더용) */
+.rank-icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--accent-sage);
+    color: white;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.rank-icon-btn:hover { background-color: var(--accent-sage-hover); }
+.rank-icon-btn:active { transform: scale(0.93); }
+
+/* 로비 랭킹 버튼 (스테이지 선택 옆) */
+.rank-btn {
+    padding: 0.9rem 1.6rem;
+    background-color: var(--accent-sage);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    min-width: 120px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+.rank-btn:hover { background-color: var(--accent-sage-hover); }
+.rank-btn:active { transform: scale(0.98); }
+
+/* 랭킹 모달 */
+.ranking-modal-content {
+    max-width: 380px;
+    width: 90vw;
+    padding: 1.8rem 1.5rem 1.5rem;
+}
+.modal-content h2.ranking-title {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.ranking-tabs {
+    display: flex;
+    gap: 0.25rem;
+    background-color: var(--cell-empty);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+.rank-tab {
+    flex: 1;
+    padding: 0.5rem 0.3rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--muted-text);
+    white-space: nowrap;
+    transition: background-color 0.2s, color 0.2s;
+}
+.rank-tab.active {
+    background: var(--cell-bg);
+    color: white;
+}
+
+.modal-content p.ranking-subtitle,
+.ranking-subtitle {
+    font-size: 0.78rem;
+    color: var(--muted-text);
+    margin: 0 0 0.5rem;
+    min-height: 1rem;
+}
+
+.rank-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.rank-scroll::-webkit-scrollbar { display: none; }
+
+.rank-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 3px;
+    text-align: left;
+    font-size: 0.85rem;
+}
+.rank-table thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: var(--muted-text);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 0.4rem 0.6rem;
+    position: sticky;
+    top: 0;
+    background: var(--container-bg);
+}
+.rank-table tbody tr {
+    background-color: var(--cell-empty);
+}
+.rank-table tbody tr.me {
+    background-color: #DDEBE3;
+    outline: 1.5px solid var(--accent-sage);
+}
+.rank-table tbody tr.podium-1 td:first-child { color: #D4A744; font-weight: 700; }
+.rank-table tbody tr.podium-2 td:first-child { color: #A8B2B8; font-weight: 700; }
+.rank-table tbody tr.podium-3 td:first-child { color: #C08850; font-weight: 700; }
+
+.rank-table td {
+    padding: 0.5rem 0.6rem;
+    font-variant-numeric: tabular-nums;
+}
+.rank-table td:first-child { border-radius: 0.4rem 0 0 0.4rem; font-weight: 600; }
+.rank-table td:last-child { border-radius: 0 0.4rem 0.4rem 0; text-align: center; }
+.rank-table td.dash { color: var(--muted-text); font-style: italic; }
+.rank-table td.best-time { color: var(--accent-sage); font-weight: 600; }
+
+.retry-btn {
+    width: 28px;
+    height: 26px;
+    padding: 0;
+    background-color: var(--cell-bg);
+    color: white;
+    border: none;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s;
+}
+.retry-btn:hover { background-color: var(--primary-hover); }
+.retry-btn.locked {
+    background-color: transparent;
+    color: var(--muted-text);
+    cursor: not-allowed;
+    border: 1px dashed #BFD3DA;
+}
+
+#ranking-close-btn {
+    background-color: var(--cell-bg);
+    color: white;
+}
+#ranking-close-btn:hover { background-color: var(--primary-hover); }
+
+/* 신기록 팝업 */
+.modal-content h2.new-record-title {
+    color: var(--accent-sage);
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+}
+.modal-content p.new-record-detail {
+    color: var(--text-color);
+    font-size: 1rem;
+    margin-bottom: 0.6rem;
+}
+.modal-content p.new-record-times {
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+.new-record-times .prev-time {
+    color: var(--muted-text);
+    text-decoration: line-through;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+.new-record-times .new-time {
+    color: var(--accent-sage);
+}
+
+#new-record-close-btn,
+#fullrun-result-close-btn,
+#fullrun-yes-btn {
+    background-color: var(--accent-sage);
+    color: white;
+}
+#new-record-close-btn:hover,
+#fullrun-result-close-btn:hover,
+#fullrun-yes-btn:hover { background-color: var(--accent-sage-hover); }
+
+#fullrun-no-btn {
+    background-color: var(--cell-empty);
+    color: var(--text-color);
+}
+#fullrun-no-btn:hover { background-color: #BFD3DA; }
+
 /* 도움말 버튼 (헤더 오른쪽) */
 .help-btn {
     width: 34px;
