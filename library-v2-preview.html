@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>서재 v2 — 팝아트/카툰 스타일 시안</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-color: #C8DDE4;
+    --container-bg: #EEF4F6;
+    --cell-empty: #DAE8EC;
+    --text-color: #1A2D3E;
+    --muted-text: #5C7A8A;
+    --accent-sage: #5D9188;
+    --primary-hover: #3F5F73;
+    --shadow: 0 8px 32px rgba(26,45,62,0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 2rem 1rem 4rem;
+    min-height: 100vh;
+}
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+.card {
+    background-color: var(--container-bg);
+    padding: 1.4rem 1.7rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+}
+h1 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+.lead { color: var(--muted-text); font-size: 0.92rem; line-height: 1.5; }
+h2 { font-size: 1.1rem; margin-bottom: 0.9rem; }
+h3 { font-size: 0.9rem; color: var(--muted-text); margin-bottom: 0.6rem; }
+
+/* 비교 섹션: 기존 vs 신규 나란히 */
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.compare-cell { display: flex; flex-direction: column; gap: 0.5rem; }
+.compare-cell .frame {
+    aspect-ratio: 160 / 100;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: #1A2D3E;
+}
+.compare-cell .frame svg { width: 100%; height: 100%; display: block; }
+.compare-cell .label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted-text);
+    text-align: center;
+}
+
+/* 10단계 진행 그리드 */
+.stage-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.7rem;
+}
+.stage-cell { display: flex; flex-direction: column; gap: 0.3rem; }
+.stage-cell .frame {
+    aspect-ratio: 160 / 100;
+    border-radius: 0.4rem;
+    overflow: hidden;
+    background-color: #1A2D3E;
+}
+.stage-cell .frame svg { width: 100%; height: 100%; display: block; }
+.stage-cell .label {
+    font-size: 0.75rem;
+    color: var(--muted-text);
+    text-align: center;
+}
+
+/* 큰 슬라이더 미리보기 */
+.scrubber-frame {
+    aspect-ratio: 160 / 100;
+    background-color: #1A2D3E;
+    border-radius: 0.6rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.scrubber-frame svg { width: 100%; height: 100%; display: block; }
+.scrubber-controls {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+}
+.scrubber-controls input[type=range] {
+    flex: 1;
+    accent-color: var(--accent-sage);
+}
+.scrubber-controls .value {
+    min-width: 5em;
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+}
+
+/* 스테이지별 추가물 설명 박스 */
+.legend-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+.legend-list b { color: var(--accent-sage); margin-right: 0.4em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="card">
+    <h1>공간 ① 아늑한 서재 — 팝아트 / 카툰 스타일 시안</h1>
+    <p class="lead">
+        기존 픽셀-아트(<code>&lt;rect&gt;</code> 기반) 그래픽을 카툰 일러스트 스타일로 다시 그려본 시안이에요.
+        스테이지마다 디테일이 추가되는 reveal 시스템(<code>data-min-stage</code>)은 그대로 호환됩니다.
+        스타일 키워드: 따뜻한 크림 벽 + 우드 플로어, 굵은 라인, 평면 컬러, 카툰 비율.
+    </p>
+</div>
+
+<!-- 1. 기존 vs 신규 -->
+<div class="card">
+    <h2>1. 기존 스타일 vs 새 스타일 (둘 다 reveal level 10 = 완성본)</h2>
+    <div class="compare-grid">
+        <div class="compare-cell">
+            <div class="frame" id="oldFrame"></div>
+            <div class="label">기존 — 픽셀 아트 (어두운 야간 톤)</div>
+        </div>
+        <div class="compare-cell">
+            <div class="frame" id="newFrame"></div>
+            <div class="label">새 시안 — 카툰 / 팝아트 (따뜻한 주간 톤)</div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. 10단계 진행 미리보기 -->
+<div class="card">
+    <h2>2. 새 시안의 reveal 단계 (스테이지 1 → 10)</h2>
+    <h3>왼쪽 → 오른쪽, 위 → 아래로 갈수록 디테일이 쌓입니다.</h3>
+    <div class="stage-grid" id="stageGrid"></div>
+</div>
+
+<!-- 3. 슬라이더로 직접 스크럽 -->
+<div class="card">
+    <h2>3. 슬라이더로 직접 단계 변경</h2>
+    <div class="scrubber-frame" id="scrubFrame"></div>
+    <div class="scrubber-controls">
+        <input id="scrubSlider" type="range" min="1" max="10" step="1" value="10">
+        <span class="value" id="scrubValue">스테이지 10</span>
+    </div>
+</div>
+
+<!-- 4. 스테이지별 추가 요소 설명 -->
+<div class="card">
+    <h2>4. 스테이지별로 추가되는 요소</h2>
+    <div class="legend-list">
+        <div><b>1</b>크림 벽 + 우드 플로어 (베이스 룸)</div>
+        <div><b>2</b>중앙 안락 의자 (머스타드 + 세이지 쿠션)</div>
+        <div><b>3</b>아치형 창문 + 커튼, 햇빛 자국</div>
+        <div><b>4</b>왼쪽 책장 (다섯 단, 컬러 책)</div>
+        <div><b>5</b>플로어 램프 (따뜻한 빛 글로우)</div>
+        <div><b>6</b>사이드 테이블 + 펼친 책</div>
+        <div><b>7</b>안락 의자 위 잠든 고양이</div>
+        <div><b>8</b>구석 화분 (몬스테라)</div>
+        <div><b>9</b>벽 액자 두 점 (추상 + 풍경)</div>
+        <div><b>10</b>김 나는 찻잔, 벽시계, 책 더미</div>
+    </div>
+</div>
+
+</div>
+
+<!-- ==== 기존 tpl-1 (참고용) ==== -->
+<template id="tpl-old">
+<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">
+    <rect x="0" y="0" width="160" height="100" fill="#0E1A28"/>
+    <g data-min-stage="1">
+        <rect x="0" y="0" width="160" height="85" fill="#2A3A4E"/>
+        <rect x="0" y="0" width="160" height="3" fill="#1A2533"/>
+        <rect x="0" y="83" width="160" height="2" fill="#1A2533"/>
+        <rect x="40" y="3" width="1" height="80" fill="#243346" opacity="0.6"/>
+        <rect x="120" y="3" width="1" height="80" fill="#243346" opacity="0.6"/>
+        <rect x="0" y="85" width="160" height="15" fill="#3A2F28"/>
+        <rect x="0" y="85" width="160" height="1" fill="#5E4638"/>
+        <rect x="20" y="86" width="1" height="14" fill="#2A211A"/>
+        <rect x="50" y="86" width="1" height="14" fill="#2A211A"/>
+        <rect x="80" y="86" width="1" height="14" fill="#2A211A"/>
+        <rect x="110" y="86" width="1" height="14" fill="#2A211A"/>
+        <rect x="140" y="86" width="1" height="14" fill="#2A211A"/>
+        <rect x="60" y="22" width="40" height="53" fill="#3D5A80"/>
+    </g>
+    <g data-min-stage="2">
+        <rect x="6" y="40" width="22" height="45" fill="#5C3A1F"/>
+        <rect x="6" y="40" width="22" height="2" fill="#3F2A18"/>
+        <rect x="6" y="55" width="22" height="2" fill="#3F2A18"/>
+        <rect x="6" y="70" width="22" height="2" fill="#3F2A18"/>
+        <rect x="8" y="42" width="3" height="13" fill="#A8453F"/>
+        <rect x="11" y="43" width="3" height="12" fill="#5D9188"/>
+        <rect x="14" y="42" width="2" height="13" fill="#E5A847"/>
+        <rect x="16" y="44" width="3" height="11" fill="#3A4A6E"/>
+        <rect x="19" y="42" width="4" height="13" fill="#A8453F"/>
+        <rect x="23" y="43" width="3" height="12" fill="#5D9188"/>
+        <rect x="8" y="57" width="3" height="13" fill="#3A4A6E"/>
+        <rect x="11" y="59" width="2" height="11" fill="#E5A847"/>
+        <rect x="13" y="57" width="4" height="13" fill="#5D9188"/>
+        <rect x="17" y="59" width="3" height="11" fill="#A8453F"/>
+        <rect x="20" y="57" width="3" height="13" fill="#8E6240"/>
+        <rect x="23" y="58" width="3" height="12" fill="#5D9188"/>
+    </g>
+    <g data-min-stage="3">
+        <rect x="132" y="40" width="22" height="45" fill="#5C3A1F"/>
+        <rect x="132" y="40" width="22" height="2" fill="#3F2A18"/>
+        <rect x="132" y="55" width="22" height="2" fill="#3F2A18"/>
+        <rect x="132" y="70" width="22" height="2" fill="#3F2A18"/>
+        <rect x="134" y="42" width="3" height="13" fill="#5D9188"/>
+        <rect x="137" y="43" width="3" height="12" fill="#E5A847"/>
+        <rect x="140" y="42" width="3" height="13" fill="#A8453F"/>
+        <rect x="143" y="44" width="2" height="11" fill="#3A4A6E"/>
+        <rect x="145" y="42" width="4" height="13" fill="#5D9188"/>
+        <rect x="149" y="43" width="3" height="12" fill="#A8453F"/>
+        <rect x="134" y="57" width="2" height="13" fill="#A8453F"/>
+        <rect x="136" y="59" width="3" height="11" fill="#E5A847"/>
+        <rect x="139" y="57" width="3" height="13" fill="#3A4A6E"/>
+        <rect x="142" y="59" width="3" height="11" fill="#5D9188"/>
+        <rect x="145" y="57" width="4" height="13" fill="#A8453F"/>
+        <rect x="149" y="58" width="3" height="12" fill="#8E6240"/>
+    </g>
+    <g data-min-stage="4">
+        <rect x="68" y="32" width="24" height="40" fill="#A8453F"/>
+        <rect x="68" y="32" width="24" height="3" fill="#7A2F2C"/>
+        <rect x="64" y="68" width="32" height="6" fill="#7A2F2C"/>
+        <rect x="64" y="65" width="32" height="3" fill="#A8453F"/>
+        <rect x="74" y="40" width="12" height="3" fill="#FFFCF2"/>
+    </g>
+    <g data-min-stage="5">
+        <rect x="44" y="74" width="14" height="6" fill="#3F2A18"/>
+        <rect x="42" y="73" width="18" height="2" fill="#5C3A1F"/>
+        <rect x="46" y="68" width="10" height="6" fill="#FFFCF2"/>
+    </g>
+    <g data-min-stage="6">
+        <rect x="100" y="65" width="16" height="14" fill="#5C3A1F"/>
+        <rect x="100" y="64" width="16" height="2" fill="#3F2A18"/>
+        <rect x="103" y="68" width="3" height="11" fill="#3F2A18"/>
+        <rect x="110" y="68" width="3" height="11" fill="#3F2A18"/>
+        <rect x="105" y="62" width="6" height="3" fill="#FFFCF2"/>
+        <rect x="106" y="60" width="4" height="3" fill="#E5A847"/>
+    </g>
+    <g data-min-stage="7">
+        <rect x="68" y="38" width="2" height="2" fill="#FFFCF2"/>
+        <rect x="76" y="42" width="2" height="2" fill="#FFFCF2"/>
+        <rect x="80" y="48" width="2" height="2" fill="#FFFCF2"/>
+        <rect x="86" y="40" width="2" height="2" fill="#FFFCF2"/>
+        <rect x="92" y="46" width="2" height="2" fill="#FFFCF2"/>
+        <rect x="74" y="58" width="3" height="3" fill="#FFFCF2"/>
+        <rect x="84" y="60" width="3" height="3" fill="#FFFCF2"/>
+    </g>
+    <g data-min-stage="8">
+        <rect x="105" y="78" width="14" height="6" fill="#5C3A1F"/>
+        <rect x="106" y="76" width="12" height="2" fill="#8E6240"/>
+        <rect x="105" y="84" width="14" height="2" fill="#3F2A18"/>
+        <rect x="108" y="73" width="2" height="3" fill="#FFFCF2"/>
+        <rect x="113" y="73" width="2" height="3" fill="#FFFCF2"/>
+        <rect x="109" y="71" width="1" height="2" fill="#FFE9A8"/>
+        <rect x="114" y="71" width="1" height="2" fill="#FFE9A8"/>
+    </g>
+    <g data-min-stage="9">
+        <rect x="34" y="80" width="20" height="3" fill="#3A4A6E"/>
+        <rect x="34" y="77" width="20" height="3" fill="#A8453F"/>
+        <rect x="34" y="74" width="20" height="3" fill="#5D9188"/>
+    </g>
+    <g data-min-stage="10">
+        <rect x="60" y="78" width="40" height="2" fill="#A8453F"/>
+        <rect x="62" y="80" width="36" height="3" fill="#7A2F2C"/>
+        <rect x="64" y="83" width="32" height="2" fill="#5C3A1F"/>
+    </g>
+</svg>
+</template>
+
+<!-- ==== 신규 시안 (카툰 / 팝아트 스타일) ==== -->
+<template id="tpl-new">
+<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <!-- ========================
+         스테이지 1: 베이스 룸
+         ======================== -->
+    <g data-min-stage="1">
+        <!-- 벽: 따뜻한 크림 -->
+        <rect x="0" y="0" width="160" height="80" fill="#F4E8D0"/>
+        <!-- 오른쪽 벽 살짝 어두운 톤 (코너 음영) -->
+        <rect x="148" y="0" width="12" height="80" fill="#E8D9B5"/>
+        <!-- 바닥: 우드 -->
+        <rect x="0" y="78" width="160" height="22" fill="#C9885A"/>
+        <!-- 바닥 플랭크 라인 (얇고 부드럽게) -->
+        <line x1="0" y1="84" x2="160" y2="84" stroke="#9A6638" stroke-width="0.4" opacity="0.55"/>
+        <line x1="0" y1="90" x2="160" y2="90" stroke="#9A6638" stroke-width="0.4" opacity="0.55"/>
+        <line x1="0" y1="96" x2="160" y2="96" stroke="#9A6638" stroke-width="0.4" opacity="0.55"/>
+        <!-- 벽-바닥 경계선 (포인트 라인) -->
+        <line x1="0" y1="78" x2="160" y2="78" stroke="#1A2D3E" stroke-width="0.7"/>
+        <!-- 바닥 앞단 살짝 어둡게 -->
+        <rect x="0" y="78" width="160" height="1.2" fill="#9A6638" opacity="0.5"/>
+    </g>
+
+    <!-- ========================
+         스테이지 2: 중앙 안락 의자
+         ======================== -->
+    <g data-min-stage="2" stroke="#1A2D3E" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round">
+        <!-- 의자 그림자 -->
+        <ellipse cx="80" cy="83" rx="24" ry="2.2" fill="#9A6638" opacity="0.55" stroke="none"/>
+        <!-- 의자 등받이 -->
+        <path d="M 60 50 Q 60 36, 80 36 Q 100 36, 100 50 L 100 70 L 60 70 Z" fill="#E5A847"/>
+        <!-- 등받이 상단 음영 -->
+        <path d="M 60 50 Q 60 36, 80 36 Q 100 36, 100 50" fill="none" stroke="#A8721C" stroke-width="0.5" opacity="0.7"/>
+        <!-- 의자 왼팔 -->
+        <path d="M 56 56 Q 56 50, 60 50 L 60 76 L 56 76 Z" fill="#D89638"/>
+        <!-- 의자 오른팔 -->
+        <path d="M 100 50 Q 104 50, 104 56 L 104 76 L 100 76 Z" fill="#D89638"/>
+        <!-- 좌석 쿠션 -->
+        <path d="M 58 64 Q 58 61, 62 61 L 98 61 Q 102 61, 102 64 L 102 76 L 58 76 Z" fill="#F2BC58"/>
+        <!-- 쿠션 솔기 -->
+        <path d="M 60 67 L 100 67" fill="none" stroke="#A8721C" stroke-width="0.4" opacity="0.6"/>
+        <!-- 등받이 쿠션 (세이지 틸) -->
+        <ellipse cx="68" cy="58" rx="6.5" ry="4.5" fill="#5D9188"/>
+        <ellipse cx="68" cy="58" rx="6.5" ry="4.5" fill="none" stroke="#3D6661" stroke-width="0.4" opacity="0.6"/>
+        <!-- 의자 다리 -->
+        <rect x="58" y="76" width="2" height="3.5" fill="#5C3A1F" stroke="none"/>
+        <rect x="100" y="76" width="2" height="3.5" fill="#5C3A1F" stroke="none"/>
+    </g>
+
+    <!-- ========================
+         스테이지 3: 아치형 창문 + 커튼
+         ======================== -->
+    <g data-min-stage="3" stroke="#1A2D3E" stroke-width="0.6" stroke-linejoin="round">
+        <!-- 햇빛이 바닥에 비치는 자국 (먼저 배치해야 의자 뒤에) -->
+        <polygon points="34,80 54,80 62,98 26,98" fill="#FFE9A8" opacity="0.4" stroke="none"/>
+        <!-- 창문 안 (하늘) -->
+        <path d="M 30 25 Q 30 13, 42 13 Q 54 13, 54 25 L 54 50 L 30 50 Z" fill="#C8DDE4"/>
+        <!-- 창살 (4분할) -->
+        <line x1="42" y1="13" x2="42" y2="50" stroke="#1A2D3E" stroke-width="0.5"/>
+        <line x1="30" y1="32" x2="54" y2="32" stroke="#1A2D3E" stroke-width="0.5"/>
+        <!-- 창틀 (외곽 굵은 선) -->
+        <path d="M 28 25 Q 28 11, 42 11 Q 56 11, 56 25 L 56 52 L 28 52 Z" fill="none" stroke="#1A2D3E" stroke-width="1"/>
+        <!-- 창턱 -->
+        <rect x="26" y="50" width="32" height="3" fill="#FFFCF2"/>
+        <!-- 왼쪽 커튼 -->
+        <path d="M 22 11 L 28 11 L 28 50 Q 25 30, 22 30 Z" fill="#C45D3F"/>
+        <path d="M 23 14 Q 25 22, 26 30" fill="none" stroke="#7A2F2C" stroke-width="0.4" opacity="0.6"/>
+        <!-- 오른쪽 커튼 -->
+        <path d="M 56 11 L 62 11 L 62 30 Q 59 30, 56 50 Z" fill="#C45D3F"/>
+        <path d="M 58 14 Q 59 22, 60 30" fill="none" stroke="#7A2F2C" stroke-width="0.4" opacity="0.6"/>
+        <!-- 커튼 봉 -->
+        <line x1="20" y1="11" x2="64" y2="11" stroke="#1A2D3E" stroke-width="0.8"/>
+        <circle cx="20" cy="11" r="0.9" fill="#1A2D3E"/>
+        <circle cx="64" cy="11" r="0.9" fill="#1A2D3E"/>
+    </g>
+
+    <!-- ========================
+         스테이지 4: 왼쪽 책장
+         ======================== -->
+    <g data-min-stage="4" stroke="#1A2D3E" stroke-width="0.55" stroke-linejoin="round">
+        <!-- 책장 몸체 -->
+        <rect x="6" y="22" width="18" height="56" fill="#8B5A2B"/>
+        <!-- 선반 라인 -->
+        <line x1="6" y1="36" x2="24" y2="36" stroke="#5C3A1F" stroke-width="0.6"/>
+        <line x1="6" y1="50" x2="24" y2="50" stroke="#5C3A1F" stroke-width="0.6"/>
+        <line x1="6" y1="64" x2="24" y2="64" stroke="#5C3A1F" stroke-width="0.6"/>
+        <!-- 1단 책 -->
+        <rect x="8" y="24" width="3" height="11" fill="#C45D3F"/>
+        <rect x="11" y="25" width="3" height="10" fill="#5D9188"/>
+        <rect x="14" y="24" width="3" height="11" fill="#E5A847"/>
+        <rect x="17" y="26" width="2" height="9" fill="#3A4A6E"/>
+        <rect x="19" y="24" width="4" height="11" fill="#A8453F"/>
+        <!-- 2단 책 -->
+        <rect x="8" y="38" width="3" height="11" fill="#3A4A6E"/>
+        <rect x="11" y="40" width="2" height="9" fill="#E5A847"/>
+        <rect x="13" y="38" width="4" height="11" fill="#5D9188"/>
+        <rect x="17" y="40" width="3" height="9" fill="#C45D3F"/>
+        <rect x="20" y="38" width="3" height="11" fill="#8E6240"/>
+        <!-- 3단 책 -->
+        <rect x="8" y="52" width="2" height="11" fill="#5D9188"/>
+        <rect x="10" y="54" width="3" height="9" fill="#E5A847"/>
+        <rect x="13" y="52" width="3" height="11" fill="#3A4A6E"/>
+        <rect x="16" y="54" width="3" height="9" fill="#C45D3F"/>
+        <rect x="19" y="52" width="4" height="11" fill="#5D9188"/>
+        <!-- 4단 (장식 — 도자기) -->
+        <ellipse cx="15" cy="73" rx="4" ry="3" fill="#5D9188"/>
+        <path d="M 13 68 L 17 68 L 17 73 L 13 73 Z" fill="#5D9188"/>
+        <ellipse cx="15" cy="68" rx="2" ry="0.6" fill="#3D6661" stroke="none"/>
+    </g>
+
+    <!-- ========================
+         스테이지 5: 플로어 램프
+         ======================== -->
+    <g data-min-stage="5" stroke="#1A2D3E" stroke-width="0.55" stroke-linejoin="round">
+        <!-- 빛 글로우 (램프 뒤쪽) -->
+        <ellipse cx="138" cy="40" rx="16" ry="12" fill="#FFE9A8" opacity="0.35" stroke="none"/>
+        <!-- 램프 폴 -->
+        <line x1="138" y1="34" x2="138" y2="78" stroke="#1A2D3E" stroke-width="1.1"/>
+        <!-- 램프 갓 -->
+        <path d="M 130 28 L 146 28 L 142 38 L 134 38 Z" fill="#E5A847"/>
+        <!-- 갓 상단 라인 -->
+        <line x1="130" y1="28" x2="146" y2="28" stroke="#1A2D3E" stroke-width="0.8"/>
+        <!-- 베이스 -->
+        <ellipse cx="138" cy="78" rx="5" ry="1.5" fill="#1A2D3E"/>
+    </g>
+
+    <!-- ========================
+         스테이지 6: 사이드 테이블 + 펼친 책
+         ======================== -->
+    <g data-min-stage="6" stroke="#1A2D3E" stroke-width="0.55" stroke-linejoin="round">
+        <!-- 테이블 상판 -->
+        <ellipse cx="115" cy="64" rx="10" ry="3" fill="#8B5A2B"/>
+        <ellipse cx="115" cy="64" rx="10" ry="3" fill="none" stroke="#5C3A1F" stroke-width="0.4" opacity="0.6"/>
+        <!-- 테이블 다리 (페데스탈) -->
+        <path d="M 113 66 L 117 66 L 116 78 L 114 78 Z" fill="#5C3A1F"/>
+        <ellipse cx="115" cy="78" rx="4" ry="1" fill="#5C3A1F"/>
+        <!-- 펼친 책 (테이블 위) -->
+        <path d="M 109 60 L 121 60 L 121 63 L 115 63 L 109 63 Z" fill="#FFFCF2"/>
+        <line x1="115" y1="60" x2="115" y2="63" stroke="#1A2D3E" stroke-width="0.5"/>
+        <line x1="111" y1="61.5" x2="113" y2="61.5" stroke="#A8721C" stroke-width="0.3"/>
+        <line x1="117" y1="61.5" x2="119" y2="61.5" stroke="#A8721C" stroke-width="0.3"/>
+    </g>
+
+    <!-- ========================
+         스테이지 7: 의자에 앉아있는 고양이 (꼿꼿이 앉아 정면을 보는 자세)
+         ======================== -->
+    <g data-min-stage="7" stroke="#1A2D3E" stroke-width="0.55" stroke-linejoin="round" stroke-linecap="round">
+        <!-- 의자 위 그림자 -->
+        <ellipse cx="80" cy="74.7" rx="9.2" ry="0.9" fill="#A85820" opacity="0.4" stroke="none"/>
+
+        <!-- 꼬리 (몸통 오른쪽에서 앞쪽으로 부드럽게 감김 — 발 뒤로 들어감) -->
+        <path d="M 87 71 Q 92 73, 90 75 Q 80 76, 76 74" fill="#D88445"/>
+
+        <!-- 몸통 (앉은 자세 — 아래가 넓고 위가 좁은 사다리꼴, 라운드 처리) -->
+        <path d="M 73 74 L 87 74 L 86 67 Q 84 60, 80 60 Q 76 60, 74 67 Z" fill="#D88445"/>
+
+        <!-- 가슴/배 부분 (밝은 크림 — 턱시도 고양이처럼 흰 가슴) -->
+        <path d="M 76.5 67 Q 78 64.5, 80 64.5 Q 82 64.5, 83.5 67 L 83.5 73.3 L 76.5 73.3 Z" fill="#F5E5C8" stroke="none"/>
+
+        <!-- 옆구리 줄무늬 (몸통 양쪽) -->
+        <path d="M 74.5 68 Q 75.3 67, 76 68" fill="none" stroke="#A85820" stroke-width="0.5"/>
+        <path d="M 84 68 Q 84.7 67, 85.5 68" fill="none" stroke="#A85820" stroke-width="0.5"/>
+        <path d="M 74.5 71 Q 75.3 70, 76 71" fill="none" stroke="#A85820" stroke-width="0.5"/>
+        <path d="M 84 71 Q 84.7 70, 85.5 71" fill="none" stroke="#A85820" stroke-width="0.5"/>
+
+        <!-- 앞발 두 개 (몸통 앞쪽 아래에 동그랗게 붙어있음) -->
+        <ellipse cx="77.5" cy="73.4" rx="2.1" ry="1.2" fill="#E8A570"/>
+        <ellipse cx="82.5" cy="73.4" rx="2.1" ry="1.2" fill="#E8A570"/>
+
+        <!-- 머리 (몸통 위에 얹힌 약간 큰 타원) -->
+        <ellipse cx="80" cy="55" rx="5.5" ry="4.6" fill="#D88445"/>
+
+        <!-- 귀 (머리 위 두 개) -->
+        <path d="M 75 53 L 76.5 49 L 78 53 Z" fill="#D88445"/>
+        <path d="M 82 53 L 83.5 49 L 85 53 Z" fill="#D88445"/>
+        <!-- 귀 안 (분홍) -->
+        <path d="M 75.8 52.3 L 76.5 50.6 L 77.2 52.3 Z" fill="#E8A8A0" stroke="none"/>
+        <path d="M 82.8 52.3 L 83.5 50.6 L 84.2 52.3 Z" fill="#E8A8A0" stroke="none"/>
+
+        <!-- 이마 줄무늬 (M 자) -->
+        <path d="M 78 52.5 L 78.5 50.7" fill="none" stroke="#A85820" stroke-width="0.45"/>
+        <path d="M 80 52.2 L 80 50.4" fill="none" stroke="#A85820" stroke-width="0.45"/>
+        <path d="M 82 52.5 L 81.5 50.7" fill="none" stroke="#A85820" stroke-width="0.45"/>
+
+        <!-- 눈 (떠 있는 동그란 눈 — 호기심 어린 표정) -->
+        <ellipse cx="77.4" cy="55.4" rx="1.05" ry="1.4" fill="#FFFCF2"/>
+        <ellipse cx="82.6" cy="55.4" rx="1.05" ry="1.4" fill="#FFFCF2"/>
+        <!-- 동공 (수직 슬릿 — 고양이 눈 특유) -->
+        <ellipse cx="77.4" cy="55.4" rx="0.32" ry="1.05" fill="#1A2D3E" stroke="none"/>
+        <ellipse cx="82.6" cy="55.4" rx="0.32" ry="1.05" fill="#1A2D3E" stroke="none"/>
+        <!-- 눈빛 (작은 흰 점 — 살아있는 느낌) -->
+        <circle cx="77.7" cy="54.8" r="0.22" fill="#FFFCF2" stroke="none"/>
+        <circle cx="82.9" cy="54.8" r="0.22" fill="#FFFCF2" stroke="none"/>
+
+        <!-- 코 (분홍 작은 삼각) -->
+        <path d="M 79.3 57.5 L 80.7 57.5 L 80 58.3 Z" fill="#E8A8A0" stroke="#1A2D3E" stroke-width="0.3"/>
+
+        <!-- 입 (Y → w 모양 — 살짝 미소) -->
+        <path d="M 80 58.3 L 80 58.85" fill="none" stroke="#1A2D3E" stroke-width="0.4"/>
+        <path d="M 80 58.85 Q 79.3 59.3, 78.8 58.9" fill="none" stroke="#1A2D3E" stroke-width="0.4"/>
+        <path d="M 80 58.85 Q 80.7 59.3, 81.2 58.9" fill="none" stroke="#1A2D3E" stroke-width="0.4"/>
+
+        <!-- 수염 (양쪽 두 가닥씩) -->
+        <path d="M 75.5 57.8 L 78 58.0" fill="none" stroke="#1A2D3E" stroke-width="0.3" opacity="0.65"/>
+        <path d="M 75.5 58.9 L 78 58.6" fill="none" stroke="#1A2D3E" stroke-width="0.3" opacity="0.65"/>
+        <path d="M 82 58.0 L 84.5 57.8" fill="none" stroke="#1A2D3E" stroke-width="0.3" opacity="0.65"/>
+        <path d="M 82 58.6 L 84.5 58.9" fill="none" stroke="#1A2D3E" stroke-width="0.3" opacity="0.65"/>
+    </g>
+
+    <!-- ========================
+         스테이지 8: 구석 화분 (몬스테라)
+         ======================== -->
+    <g data-min-stage="8" stroke="#1A2D3E" stroke-width="0.5" stroke-linejoin="round">
+        <!-- 화분 -->
+        <path d="M 145 70 L 158 70 L 156 80 L 147 80 Z" fill="#C45D3F"/>
+        <line x1="145" y1="73" x2="158" y2="73" stroke="#1A2D3E" stroke-width="0.4"/>
+        <!-- 흙 (살짝) -->
+        <path d="M 146 70 L 157 70 L 157 71 L 146 71 Z" fill="#3F2A18" stroke="none"/>
+        <!-- 잎 줄기 -->
+        <line x1="151" y1="70" x2="148" y2="55" stroke="#3D6B4A" stroke-width="0.7"/>
+        <line x1="151" y1="70" x2="155" y2="58" stroke="#3D6B4A" stroke-width="0.7"/>
+        <line x1="151" y1="70" x2="151" y2="48" stroke="#3D6B4A" stroke-width="0.7"/>
+        <line x1="151" y1="70" x2="146" y2="63" stroke="#3D6B4A" stroke-width="0.6"/>
+        <line x1="151" y1="70" x2="156" y2="64" stroke="#3D6B4A" stroke-width="0.6"/>
+        <!-- 잎 -->
+        <ellipse cx="148" cy="54" rx="3" ry="5" fill="#5D9188" transform="rotate(-15 148 54)"/>
+        <ellipse cx="155" cy="58" rx="3" ry="5" fill="#5D9188" transform="rotate(20 155 58)"/>
+        <ellipse cx="151" cy="48" rx="2.6" ry="4" fill="#5D9188"/>
+        <ellipse cx="146" cy="63" rx="2.6" ry="4" fill="#5D9188" transform="rotate(-30 146 63)"/>
+        <ellipse cx="156" cy="64" rx="2.6" ry="4" fill="#5D9188" transform="rotate(35 156 64)"/>
+        <!-- 잎 디테일 (몬스테라 슬릿 느낌) -->
+        <line x1="148" y1="50" x2="148" y2="58" stroke="#3D6B4A" stroke-width="0.3" opacity="0.7"/>
+        <line x1="155" y1="54" x2="155" y2="62" stroke="#3D6B4A" stroke-width="0.3" opacity="0.7"/>
+    </g>
+
+    <!-- ========================
+         스테이지 9: 벽 액자 두 점
+         ======================== -->
+    <g data-min-stage="9" stroke="#1A2D3E" stroke-width="0.5" stroke-linejoin="round">
+        <!-- 액자 1: 책장 위, 추상 -->
+        <rect x="7" y="9" width="16" height="10" fill="#FFFCF2"/>
+        <circle cx="15" cy="14" r="2.4" fill="#E5A847"/>
+        <path d="M 8 18 L 13 14 L 17 16 L 22 13 L 22 18 L 8 18 Z" fill="#5D9188"/>
+        <!-- 액자 1 외곽 (선) -->
+        <rect x="7" y="9" width="16" height="10" fill="none" stroke="#1A2D3E" stroke-width="0.7"/>
+
+        <!-- 액자 2: 의자 위, 풍경 -->
+        <rect x="68" y="20" width="24" height="14" fill="#FFFCF2"/>
+        <!-- 산 -->
+        <path d="M 68 31 L 74 24 L 78 27 L 82 22 L 86 26 L 92 31 Z" fill="#5D9188"/>
+        <!-- 산 그림자 -->
+        <path d="M 78 27 L 80 25 L 82 22 L 80 26 Z" fill="#3D6661" stroke="none"/>
+        <!-- 해 -->
+        <circle cx="86" cy="24" r="1.6" fill="#E5A847"/>
+        <!-- 액자 2 외곽 -->
+        <rect x="68" y="20" width="24" height="14" fill="none" stroke="#1A2D3E" stroke-width="0.7"/>
+    </g>
+
+    <!-- ========================
+         스테이지 10: 마무리 코지 디테일
+         ======================== -->
+    <g data-min-stage="10" stroke="#1A2D3E" stroke-width="0.5" stroke-linejoin="round" stroke-linecap="round">
+        <!-- 찻잔 (사이드 테이블 위) -->
+        <path d="M 108 56 L 114 56 L 113 60.5 L 109 60.5 Z" fill="#FFFCF2"/>
+        <ellipse cx="111" cy="56" rx="3" ry="0.7" fill="#A85820"/>
+        <!-- 찻잔 손잡이 -->
+        <path d="M 114 57 Q 116.5 57.3, 116.5 58.5 Q 116.5 60, 114 59.7" fill="none"/>
+        <!-- 김 -->
+        <path d="M 110 54 Q 109 52, 110 50 Q 111 48, 110 46" fill="none" stroke="#FFFCF2" stroke-width="0.7" opacity="0.85"/>
+        <path d="M 112 54 Q 113 52, 112 50 Q 111 48, 112 46" fill="none" stroke="#FFFCF2" stroke-width="0.7" opacity="0.85"/>
+
+        <!-- 벽시계 -->
+        <circle cx="125" cy="14" r="6" fill="#FFFCF2"/>
+        <circle cx="125" cy="14" r="6" fill="none" stroke="#1A2D3E" stroke-width="0.7"/>
+        <line x1="125" y1="14" x2="125" y2="9.5" stroke="#1A2D3E" stroke-width="0.7"/>
+        <line x1="125" y1="14" x2="128.5" y2="14" stroke="#1A2D3E" stroke-width="0.55"/>
+        <circle cx="125" cy="14" r="0.6" fill="#1A2D3E" stroke="none"/>
+        <!-- 12시 마커 -->
+        <line x1="125" y1="9" x2="125" y2="10" stroke="#1A2D3E" stroke-width="0.4"/>
+
+        <!-- 책 더미 (의자 옆 바닥) -->
+        <rect x="46" y="76" width="9" height="2" fill="#3A4A6E"/>
+        <rect x="47" y="74" width="8" height="2" fill="#C45D3F"/>
+        <rect x="48" y="72" width="7" height="2" fill="#5D9188"/>
+        <line x1="46" y1="78" x2="55" y2="78" stroke="#1A2D3E" stroke-width="0.4"/>
+        <line x1="47" y1="76" x2="55" y2="76" stroke="#1A2D3E" stroke-width="0.4"/>
+        <line x1="48" y1="74" x2="55" y2="74" stroke="#1A2D3E" stroke-width="0.4"/>
+    </g>
+</svg>
+</template>
+
+<script>
+function renderAtLevel(targetEl, templateId, level) {
+    const tpl = document.getElementById(templateId);
+    const svg = tpl.content.querySelector('svg').cloneNode(true);
+    svg.querySelectorAll('[data-min-stage]').forEach(el => {
+        if (Number(el.dataset.minStage) > level) el.setAttribute('visibility', 'hidden');
+    });
+    targetEl.innerHTML = '';
+    targetEl.appendChild(svg);
+}
+
+// 1. 비교
+renderAtLevel(document.getElementById('oldFrame'), 'tpl-old', 10);
+renderAtLevel(document.getElementById('newFrame'), 'tpl-new', 10);
+
+// 2. 10단계 그리드
+const grid = document.getElementById('stageGrid');
+for (let i = 1; i <= 10; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'stage-cell';
+    const frame = document.createElement('div');
+    frame.className = 'frame';
+    cell.appendChild(frame);
+    const lab = document.createElement('div');
+    lab.className = 'label';
+    lab.textContent = `스테이지 ${i}`;
+    cell.appendChild(lab);
+    grid.appendChild(cell);
+    renderAtLevel(frame, 'tpl-new', i);
+}
+
+// 3. 슬라이더
+const scrub = document.getElementById('scrubSlider');
+const scrubFrame = document.getElementById('scrubFrame');
+const scrubValue = document.getElementById('scrubValue');
+function updateScrub() {
+    const v = Number(scrub.value);
+    renderAtLevel(scrubFrame, 'tpl-new', v);
+    scrubValue.textContent = `스테이지 ${v}`;
+}
+scrub.addEventListener('input', updateScrub);
+updateScrub();
+</script>
+
+</body>
+</html>
